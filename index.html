@@ -13,18 +13,20 @@
     <script>
     	var runnerList = [];
     	var finisherList = [];
+    	var handSize = 3;
     	
     	var cardList = 
     	{
-    	  "Run": new card(1000, 10, ""),
-    	  "Fatigue": new card(600, 0, "")
+    	  "Run": new card(1000, 10, "", 0),
+    	  "Fatigue": new card(600, 0, "", 99)
     	};
     	
-    	function card(distance, energy, specialText)
+    	function card(distance, energy, specialText, priority)
     	{
     	    this.distance = distance;
     	    this.energy = energy;
     	    this.specialText = specialText;
+    	    this.priority = priority;
     	}
     	
     	function setupGame()
@@ -39,7 +41,14 @@
           finisherList = [];
           for (let i = 0; i < numRunners; i++)
           {
-              runnerList.push(new runner(runnerList));
+              var runner = new createRunner(runnerList);
+              shuffle(runner.deck);
+              //deck.length MUST be more than handSize, or this WILL break
+              for (let i = 0; i < handSize; i++)
+              {
+                runner.hand.push(runner.deck.pop)
+              }
+              runnerList.push(runner);
           }
           showMessage("Race will have " + numRunners + " runners.");
       }
@@ -59,13 +68,15 @@
         runnerList.length = 0;
       }
       
-      function runner(runnerList)
+      function createRunner(runnerList)
     	{
     		this.isPlayer = false;
     		this.id = runnerList.length;
     		this.position = 0;
     		this.energy = 100;
-    		this.cards = ["Run", "Run", "Run"];
+    		this.deck = ["Run", "Run", "Run"];
+    		this.hand = [];
+    		this.discard = [];
     	}
     	
     	//From Stack Overflow: https://stackoverflow.com/questions/1129216/sort-array-of-objects-by-string-property-value
@@ -87,6 +98,12 @@
   				return result * sortOrder;
   			}
   		}
+    	
+    	//From: https://javascript.info/task/shuffle
+    	function shuffle(array) 
+    	{
+        array.sort(() => Math.random() - 0.5);
+      }
     	
     	function showMessage(text)
   		{
