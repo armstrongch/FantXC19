@@ -1,0 +1,43 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="UTF-8">
+    <title>FantXC Simulator 2019</title>
+  <style type="text/css">
+   
+  </style>
+  </head>
+  <body onload="setupGame()">
+  
+  <script src="//ajax.googleapis.com/ajax/libs/jquery/1.7.2/jquery.min.js" type="text/javascript"></script>
+  <script>
+  	var runnerList = [];
+  	var cardList = [];
+  	
+  	cardList.push(new card("Run", 1000, 10, ""));
+  	
+  	function card(name, distance, energy, specialText)
+  	{
+  	    this.name = name;
+  	    this.distance = distance;
+  	    this.energy = energy;
+  	    this.specialText = specialText;
+  	}
+  	
+  	
+  	function setupGame()
+    {
+    	alert("Test");
+    }
+    
+    function newRunner(runnerList)
+	{
+		this.isPlayer = false;
+		this.id = runnerList.length;
+		this.position = 0;
+		this.energy = 100;
+		this.cards = [];
+	}
+  </script>
+  </body>
+</html>
