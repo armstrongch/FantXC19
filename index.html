@@ -8,36 +8,94 @@
   </style>
   </head>
   <body onload="setupGame()">
-  
-  <script src="//ajax.googleapis.com/ajax/libs/jquery/1.7.2/jquery.min.js" type="text/javascript"></script>
-  <script>
-  	var runnerList = [];
-  	var cardList = [];
-  	
-  	cardList.push(new card("Run", 1000, 10, ""));
-  	
-  	function card(name, distance, energy, specialText)
-  	{
-  	    this.name = name;
-  	    this.distance = distance;
-  	    this.energy = energy;
-  	    this.specialText = specialText;
-  	}
-  	
-  	
-  	function setupGame()
-    {
-    	alert("Test");
-    }
-    
-    function newRunner(runnerList)
-	{
-		this.isPlayer = false;
-		this.id = runnerList.length;
-		this.position = 0;
-		this.energy = 100;
-		this.cards = [];
-	}
-  </script>
+    <p id="testP"></p>
+    <script src="//ajax.googleapis.com/ajax/libs/jquery/1.7.2/jquery.min.js" type="text/javascript"></script>
+    <script>
+    	var runnerList = [];
+    	var finisherList = [];
+    	
+    	var cardList = 
+    	{
+    	  "Run": new card(1000, 10, ""),
+    	  "Fatigue": new card(600, 0, "")
+    	};
+    	
+    	function card(distance, energy, specialText)
+    	{
+    	    this.distance = distance;
+    	    this.energy = energy;
+    	    this.specialText = specialText;
+    	}
+    	
+    	function setupGame()
+      {
+      	setupRace(3);
+      	runRace();
+      }
+      
+      function setupRace(numRunners)
+      {
+          runnerList = [];
+          finisherList = [];
+          for (let i = 0; i < numRunners; i++)
+          {
+              runnerList.push(new runner(runnerList));
+          }
+          showMessage("Race will have " + numRunners + " runners.");
+      }
+      
+      function runRace()
+      {
+        while (runnerList.length > finisherList.length)
+        {
+          raceRound();
+        }
+      }
+      
+      function raceRound()
+      {
+        showMessage(finisherList.length + " of " + runnerList.length + " runners have finished.");
+        runnerList.sort(dynamicSort("-position"));
+        runnerList.length = 0;
+      }
+      
+      function runner(runnerList)
+    	{
+    		this.isPlayer = false;
+    		this.id = runnerList.length;
+    		this.position = 0;
+    		this.energy = 100;
+    		this.cards = ["Run", "Run", "Run"];
+    	}
+    	
+    	//From Stack Overflow: https://stackoverflow.com/questions/1129216/sort-array-of-objects-by-string-property-value
+  		function dynamicSort(property) 
+  		{
+  			var sortOrder = 1;
+  			
+  			if(property[0] === "-") 
+  			{
+  				sortOrder = -1;
+  				property = property.substr(1);
+  			}
+  			return function (a,b) 
+  			{
+  				/* next line works with strings and numbers, 
+  				 * and you may want to customize it to your needs
+  				 */
+  				var result = (a[property] < b[property]) ? -1 : (a[property] > b[property]) ? 1 : 0;
+  				return result * sortOrder;
+  			}
+  		}
+    	
+    	function showMessage(text)
+  		{
+  			$('#testP').html(
+  				$('#testP').html()
+  				+ "<br/>"
+  				+ text
+  			);
+  		}
+    </script>
   </body>
 </html>
