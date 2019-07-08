@@ -23,7 +23,7 @@
 			function getCardPriority(runner, cardName)
 			{
 				var priority = 0;
-				if (runner.energy < cardList[cardName].energy)
+				if (runner.energy < cardList[cardName].energy * (1 + runner.exhaustion))
 				{
 					priority -= 10000;
 				}
@@ -114,7 +114,7 @@
 								return getCardPriority(runner, b) - getCardPriority(runner, a);
 							}
 						);
-						if ((runner.hand.length > 0) && (cardList[runner.hand[0]].energy <= runner.energy))
+						if ((runner.hand.length > 0) && (cardList[runner.hand[0]].energy * (1 + runner.exhaustion) <= runner.energy))
 						{
 							playCard(runner, runner.hand[0]);
 							runner.discard.push(runner.hand[0]);
@@ -137,7 +137,7 @@
 				//when cardHandIndex == -1, play fatigue
 				var card = cardList[cardName];
 				runner.position += card.distance;
-				runner.energy -= card.energy;
+				runner.energy -= card.energy * (1 + runner.exhaustion);
 				var distanceFromFinish = 10000 - runner.position;
 				
 				if (runner.position < 10000)
@@ -160,6 +160,7 @@
 				this.hand = [];
 				this.discard = [];
 				this.finished = false;
+				this.exhaustion = 0;
 			}
 
 			//From Stack Overflow: https://stackoverflow.com/questions/1129216/sort-array-of-objects-by-string-property-value
