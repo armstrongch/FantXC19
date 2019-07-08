@@ -19,7 +19,8 @@
 				"Surge": new card(1400, 20, ""),
 				"Fatigue": new card(600, 0, ""),
 				"Recover": new card(800, 5, "Gain 10% Energy"),
-				"Kick": new card(1600, 6, "Expends all available Energy")
+				"Kick": new card(1600, 6, "Expends all available Energy"),
+				"Coast": new card(1000, 4, "Can only be used while running with a pack")
 			};
 
 			function getCardPriority(runner, cardName)
@@ -80,7 +81,7 @@
 				while (runnerList.length > finisherList.length)
 				{
 					raceRound();
-					updateFinisherList();
+					updateFinisherList(); //Also updates positionBeforeMoving
 				}
 			}
 			
@@ -91,6 +92,7 @@
 				for (let i = 0; i < runnerList.length; i++)
 				{
 					var runner = runnerList[i];
+					runner.positionBeforeMoving = runner.position;
 					if ((runner.position >= 10000) && (runner.finished == false))
 					{
 						finishersThisTurn.push(runner);
@@ -121,11 +123,38 @@
 								return getCardPriority(runner, b) - getCardPriority(runner, a);
 							}
 						);
-						if ((runner.hand.length > 0) && (cardList[runner.hand[0]].energy * (1 + runner.exhaustion) <= runner.energy))
+						
+						var isCoastValid = false;
+						for (let j = 0; j < runnerList.length; j++)
 						{
-							playCard(runner, runner.hand[0]);
-							runner.discard.push(runner.hand[0]);
-							runner.hand.splice(0, 1);
+							var anotherRunner = runnerList[j];
+							if ((anotherRunner.positionBeforeMoving == runner.position) && (anotherRunner.id != runner.id))
+							{
+								isCoastValid = true;
+								j = runnerList.length;
+							}
+						}
+						
+						var cardToPlayIndex = 0;
+						while 
+						(
+							(cardToPlayIndex <= runner.hand.length - 1) //cardToPlayIndex is in hand
+							&& 
+							(
+								(cardList[runner.hand[0]].energy * (1 + runner.exhaustion) > runner.energy) //Card costs too much
+								|| ((!isCoastValid) && (runner.hand[cardToPlayIndex] == "Coast")) //Card is Coast and !isCoastValid
+							)
+						)
+						{
+							cardToPlayIndex++;
+						}
+						
+						
+						if (cardToPlayIndex <= runner.hand.length - 1)
+						{
+							playCard(runner, runner.hand[cardToPlayIndex]);
+							runner.discard.push(runner.hand[cardToPlayIndex]);
+							runner.hand.splice(cardToPlayIndex, 1);
 						}
 						else
 						{
@@ -170,8 +199,9 @@
 				this.isPlayer = false;
 				this.id = runnerList.length;
 				this.position = 0;
+				this.positionBeforeMoving = 0;
 				this.energy = 100;
-				this.deck = ["Run", "Run", "Run", "Surge", "Surge", "Recover", "Recover", "Kick"];
+				this.deck = ["Run", "Run", "Run", "Surge", "Surge", "Recover", "Recover", "Kick", "Coast", "Coast"];
 				this.hand = [];
 				this.discard = [];
 				this.finished = false;
