@@ -1,118 +1,222 @@
 <!DOCTYPE html>
 <html>
-  <head>
-    <meta charset="UTF-8">
-    <title>FantXC Simulator 2019</title>
-  <style type="text/css">
-   
-  </style>
-  </head>
-  <body onload="setupGame()">
-    <p id="testP"></p>
-    <script src="//ajax.googleapis.com/ajax/libs/jquery/1.7.2/jquery.min.js" type="text/javascript"></script>
-    <script>
-    	var runnerList = [];
-    	var finisherList = [];
-    	var handSize = 3;
-    	
-    	var cardList = 
-    	{
-    	  "Run": new card(1000, 10, "", 0),
-    	  "Fatigue": new card(600, 0, "", 99)
-    	};
-    	
-    	function card(distance, energy, specialText, priority)
-    	{
-    	    this.distance = distance;
-    	    this.energy = energy;
-    	    this.specialText = specialText;
-    	    this.priority = priority;
-    	}
-    	
-    	function setupGame()
-      {
-      	setupRace(3);
-      	runRace();
-      }
-      
-      function setupRace(numRunners)
-      {
-          runnerList = [];
-          finisherList = [];
-          for (let i = 0; i < numRunners; i++)
-          {
-              var runner = new createRunner(runnerList);
-              shuffle(runner.deck);
-              //deck.length MUST be more than handSize, or this WILL break
-              for (let i = 0; i < handSize; i++)
-              {
-                runner.hand.push(runner.deck.pop)
-              }
-              runnerList.push(runner);
-          }
-          showMessage("Race will have " + numRunners + " runners.");
-      }
-      
-      function runRace()
-      {
-        while (runnerList.length > finisherList.length)
-        {
-          raceRound();
-        }
-      }
-      
-      function raceRound()
-      {
-        showMessage(finisherList.length + " of " + runnerList.length + " runners have finished.");
-        runnerList.sort(dynamicSort("-position"));
-        runnerList.length = 0;
-      }
-      
-      function createRunner(runnerList)
-    	{
-    		this.isPlayer = false;
-    		this.id = runnerList.length;
-    		this.position = 0;
-    		this.energy = 100;
-    		this.deck = ["Run", "Run", "Run"];
-    		this.hand = [];
-    		this.discard = [];
-    	}
-    	
-    	//From Stack Overflow: https://stackoverflow.com/questions/1129216/sort-array-of-objects-by-string-property-value
-  		function dynamicSort(property) 
-  		{
-  			var sortOrder = 1;
-  			
-  			if(property[0] === "-") 
-  			{
-  				sortOrder = -1;
-  				property = property.substr(1);
-  			}
-  			return function (a,b) 
-  			{
-  				/* next line works with strings and numbers, 
-  				 * and you may want to customize it to your needs
-  				 */
-  				var result = (a[property] < b[property]) ? -1 : (a[property] > b[property]) ? 1 : 0;
-  				return result * sortOrder;
-  			}
-  		}
-    	
-    	//From: https://javascript.info/task/shuffle
-    	function shuffle(array) 
-    	{
-        array.sort(() => Math.random() - 0.5);
-      }
-    	
-    	function showMessage(text)
-  		{
-  			$('#testP').html(
-  				$('#testP').html()
-  				+ "<br/>"
-  				+ text
-  			);
-  		}
-    </script>
-  </body>
+	<head>
+		<meta charset="UTF-8">
+		<title>FantXC Simulator 2019</title>
+	</head>
+	<script src="https://ajax.googleapis.com/ajax/libs/jquery/3.3.1/jquery.min.js"></script>
+	<body onload="setupGame()">
+		<p id="testP"></p>
+		
+		<script>
+			var runnerList = [];
+			var finisherList = [];
+			var handSize = 3;
+
+			var cardList = 
+			{
+				"Run": new card(1000, 10, ""),
+				"Surge": new card(1400, 20, ""),
+				"Fatigue": new card(600, 0, "")
+			};
+
+			function getCardPriority(runner, cardName)
+			{
+				var priority = 0;
+				if (runner.energy < cardList[cardName].energy)
+				{
+					priority -= 10000;
+				}
+				
+				switch(cardName)
+				{
+					default:
+						priority += cardList[cardName].distance;
+						break;
+				}
+				return priority;
+			}
+
+			function card(distance, energy, specialText)
+			{
+				this.distance = distance;
+				this.energy = energy;
+				this.specialText = specialText;
+			}
+
+			function setupGame()
+			{
+				setupRace(3);
+				runRace();
+			}
+
+			function setupRace(numRunners)
+			{
+				runnerList = [];
+				finisherList = [];
+				for (let i = 0; i < numRunners; i++)
+				{
+					var runner = new createRunner(runnerList);
+					shuffle(runner.deck);
+					//deck.length MUST be more than handSize, or this WILL break
+					for (let i = 0; i < handSize; i++)
+					{
+						runner.hand.push(runner.deck.pop());
+					}
+					runnerList.push(runner);
+				}
+				showMessage("Race will have " + numRunners + " runners.");
+			}
+
+			function runRace()
+			{
+				while (runnerList.length > finisherList.length)
+				{
+					raceRound();
+					updateFinisherList();
+				}
+			}
+			
+			function updateFinisherList()
+			{
+				//Using a temporary list in case we want to introduce an additional tiebreaker later
+				var finishersThisTurn = [];
+				for (let i = 0; i < runnerList.length; i++)
+				{
+					var runner = runnerList[i];
+					if ((runner.position >= 10000) && (runner.finished == false))
+					{
+						finishersThisTurn.push(runner);
+						runner.finished = true;
+					}
+				}
+				finishersThisTurn.sort(dynamicSort("position"));
+				for (let i = 0; i < finishersThisTurn.length; i ++)
+				{
+					finisherList.push(finishersThisTurn[i]);
+					showMessage("Runner " + finishersThisTurn[i].id + " finishes in " + ordinal_suffix_of(finisherList.length) + " place.");
+				}
+			}
+			
+			function raceRound()
+			{
+				showMessage(finisherList.length + " of " + runnerList.length + " runners have finished.");
+				runnerList.sort(dynamicSort("position"));
+				
+				for (let i = 0; i < runnerList.length; i++)
+				{
+					var runner = runnerList[i];
+					if (runner.position < 10000)
+					{
+						runner.hand.sort(
+							function(a,b)
+							{
+								return getCardPriority(runner, b) - getCardPriority(runner, a);
+							}
+						);
+						if ((runner.hand.length > 0) && (cardList[runner.hand[0]].energy <= runner.energy))
+						{
+							playCard(runner, runner.hand[0]);
+							runner.discard.push(runner.hand[0]);
+							runner.hand.splice(0, 1);
+						}
+						else
+						{
+							playCard(runner, "Fatigue");
+						}
+						if (runner.deck.length > 0)
+						{
+							runner.hand.push(runner.deck.pop());
+						}
+					}
+				}
+			}
+
+			function playCard(runner, cardName)
+			{
+				//when cardHandIndex == -1, play fatigue
+				var card = cardList[cardName];
+				runner.position += card.distance;
+				runner.energy -= card.energy;
+				var distanceFromFinish = 10000 - runner.position;
+				
+				if (runner.position < 10000)
+				{
+					showMessage("Runner " + runner.id + " plays " + cardName + " (" + distanceFromFinish + " meters from the finish, " + runner.energy + "% energy remaining).");
+				}
+				else
+				{
+					showMessage("Runner " + runner.id + " plays " + cardName + " and crosses the finish line.");
+				}
+			}
+			
+			function createRunner(runnerList)
+			{
+				this.isPlayer = false;
+				this.id = runnerList.length;
+				this.position = 0;
+				this.energy = 100;
+				this.deck = ["Run", "Run", "Run", "Surge", "Surge"];
+				this.hand = [];
+				this.discard = [];
+				this.finished = false;
+			}
+
+			//From Stack Overflow: https://stackoverflow.com/questions/1129216/sort-array-of-objects-by-string-property-value
+			function dynamicSort(property) 
+			{
+				var sortOrder = 1;
+
+				if(property[0] === "-") 
+				{
+					sortOrder = -1;
+					property = property.substr(1);
+				}
+				return function (a,b) 
+				{
+					var result = (a[property] < b[property]) ? -1 : (a[property] > b[property]) ? 1 : 0;
+					return result * sortOrder;
+				}
+			}
+
+			//From: https://javascript.info/task/shuffle
+			function shuffle(array) 
+			{
+				array.sort(() => Math.random() - 0.5);
+			}
+			
+			//From: https://stackoverflow.com/questions/13627308/add-st-nd-rd-and-th-ordinal-suffix-to-a-number
+			function ordinal_suffix_of(i) 
+			{
+				var j = i % 10,
+					k = i % 100;
+				if (j == 1 && k != 11) {
+					return i + "st";
+				}
+				if (j == 2 && k != 12) {
+					return i + "nd";
+				}
+				if (j == 3 && k != 13) {
+					return i + "rd";
+				}
+				return i + "th";
+			}
+			
+			function showMessage(text)
+			{
+				if ($('#testP').html().length == 0)
+				{
+					$('#testP').html(text);
+				}
+				else
+				{
+					$('#testP').html(
+						$('#testP').html()
+						+ "<br/>"
+						+ text
+					);
+				}
+			}
+		</script>
+	</body>
 </html>
