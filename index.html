@@ -17,7 +17,9 @@
 			{
 				"Run": new card(1000, 10, ""),
 				"Surge": new card(1400, 20, ""),
-				"Fatigue": new card(600, 0, "")
+				"Fatigue": new card(600, 0, ""),
+				"Recover": new card(800, 5, "Gain 10% Energy"),
+				"Kick": new card(1600, 6, "Expends all available Energy")
 			};
 
 			function getCardPriority(runner, cardName)
@@ -30,6 +32,11 @@
 				
 				switch(cardName)
 				{
+					case "Kick":
+						priority += cardList[cardName].distance;
+						var distanceFromFinishAfterKick = 10000 - runner.position - cardList[cardName].distance;
+						priority -= distanceFromFinishAfterKick;
+						break;
 					default:
 						priority += cardList[cardName].distance;
 						break;
@@ -138,6 +145,14 @@
 				var card = cardList[cardName];
 				runner.position += card.distance;
 				runner.energy -= card.energy * (1 + runner.exhaustion);
+				if (cardName == "Recover")
+				{
+					runner.energy += 10;
+				}
+				else if (cardName == "Kick")
+				{
+					runner.energy = 0;
+				}
 				var distanceFromFinish = 10000 - runner.position;
 				
 				if (runner.position < 10000)
@@ -156,7 +171,7 @@
 				this.id = runnerList.length;
 				this.position = 0;
 				this.energy = 100;
-				this.deck = ["Run", "Run", "Run", "Surge", "Surge"];
+				this.deck = ["Run", "Run", "Run", "Surge", "Surge", "Recover", "Recover", "Kick"];
 				this.hand = [];
 				this.discard = [];
 				this.finished = false;
