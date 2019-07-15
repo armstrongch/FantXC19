@@ -3,15 +3,37 @@
 	<head>
 		<meta charset="UTF-8">
 		<title>FantXC Simulator 2019</title>
+		<style>
+			canvas {
+				border: 1px solid black;
+				display: inline;
+			}
+		</style>
 	</head>
 	<script src="https://ajax.googleapis.com/ajax/libs/jquery/3.3.1/jquery.min.js"></script>
-	<body onload="setupGame()">
-		<p id="testP"></p>
+	<body onload="setupRace()">
+		<div id="raceDiv">
+			<table>
+				<tr><td>
+					<canvas id="raceCanvas" width="0" height="0"></canvas>
+				</td></tr>
+				<tr><td>
+					<button id="nextRoundButton" onclick="runRace()" disabled="true">Next Round</button>
+				</td></tr>
+				<tr><td>
+					<p id="testP"></p>
+				</td></tr>
+			</table>
+		</div>
 		
 		<script>
 			var runnerList = [];
 			var finisherList = [];
 			var handSize = 3;
+			var raceRoundNum = 0;
+
+			var raceCanvas = $("#raceCanvas")[0];
+			//var ctx = raceCanvas.getContext("2d");
 
 			var cardList = 
 			{
@@ -20,7 +42,8 @@
 				"Fatigue": new card(600, 0, ""),
 				"Recover": new card(800, 5, "Gain 10% Energy"),
 				"Kick": new card(1600, 6, "Expends all available Energy"),
-				"Coast": new card(1000, 4, "Can only be used while running with a pack")
+				"Coast": new card(1000, 4, "Can only be used while running with a pack"),
+				"Reel In": new card(1200, 10, "Can only be used within 300 meters behind the next runner.")
 			};
 
 			function getCardPriority(runner, cardName)
@@ -52,13 +75,15 @@
 				this.specialText = specialText;
 			}
 
-			function setupGame()
+			function setupRace()
 			{
-				setupRace(3);
+				raceCanvas.width = 500;
+				raceCanvas.height = 200;
+				setupRaceRunners(10);
 				runRace();
 			}
 
-			function setupRace(numRunners)
+			function setupRaceRunners(numRunners)
 			{
 				runnerList = [];
 				finisherList = [];
@@ -74,14 +99,19 @@
 					runnerList.push(runner);
 				}
 				showMessage("Race will have " + numRunners + " runners.");
+				raceRoundNum = 0;
 			}
 
 			function runRace()
 			{
-				while (runnerList.length > finisherList.length)
+				raceRoundNum++;
+				showMessage("<strong>Race Round " + raceRoundNum + "</strong>");
+				$('#nextRoundButton').prop('disabled', true);
+				raceRound();
+				updateFinisherList(); //Also updates positionBeforeMoving
+				if (runnerList.length > finisherList.length)
 				{
-					raceRound();
-					updateFinisherList(); //Also updates positionBeforeMoving
+					$('#nextRoundButton').prop('disabled', false);
 				}
 			}
 			
@@ -99,7 +129,7 @@
 						runner.finished = true;
 					}
 				}
-				finishersThisTurn.sort(dynamicSort("position"));
+				finishersThisTurn.sort(dynamicSort("-position"));
 				for (let i = 0; i < finishersThisTurn.length; i ++)
 				{
 					finisherList.push(finishersThisTurn[i]);
@@ -125,13 +155,24 @@
 						);
 						
 						var isCoastValid = false;
+						var isReelInValid = false;
 						for (let j = 0; j < runnerList.length; j++)
 						{
 							var anotherRunner = runnerList[j];
-							if ((anotherRunner.positionBeforeMoving == runner.position) && (anotherRunner.id != runner.id))
+							if (anotherRunner.id != runner.id)
 							{
-								isCoastValid = true;
-								j = runnerList.length;
+								if (anotherRunner.positionBeforeMoving == runner.position)
+								{
+									isCoastValid = true;
+								}
+								else if ((anotherRunner.positionBeforeMoving > runner.position) && (anotherRunner.positionBeforeMoving - runner.position <= 300))
+								{
+									isReelInValid = true;
+								}
+								if ((isCoastValid) && (isReelInValid))
+								{
+									j = runnerList.length;
+								}
 							}
 						}
 						
@@ -143,6 +184,7 @@
 							(
 								(cardList[runner.hand[0]].energy * (1 + runner.exhaustion) > runner.energy) //Card costs too much
 								|| ((!isCoastValid) && (runner.hand[cardToPlayIndex] == "Coast")) //Card is Coast and !isCoastValid
+								|| ((!isReelInValid) && (runner.hand[cardToPlayIndex] == "Reel In")) //Card is Reel In and !isReelInValid
 							)
 						)
 						{
@@ -201,7 +243,7 @@
 				this.position = 0;
 				this.positionBeforeMoving = 0;
 				this.energy = 100;
-				this.deck = ["Run", "Run", "Run", "Surge", "Surge", "Recover", "Recover", "Kick", "Coast", "Coast"];
+				this.deck = ["Run", "Run", "Run", "Surge", "Surge", "Recover", "Recover", "Kick", "Coast", "Coast", "Reel In", "Reel In"];
 				this.hand = [];
 				this.discard = [];
 				this.finished = false;
@@ -263,19 +305,6 @@
 					);
 				}
 			}
-		/* WHY DID THIS HAPPEN???
-		0 of 3 runners have finished.
-		Runner 2 plays Surge (1600 meters from the finish, 36% energy remaining).
-		Runner 0 plays Run (1400 meters from the finish, 27% energy remaining).
-		Runner 1 plays Run (1400 meters from the finish, 27% energy remaining).
-		0 of 3 runners have finished.
-		Runner 2 plays Kick and crosses the finish line.
-		Runner 0 plays Kick and crosses the finish line.
-		Runner 1 plays Kick and crosses the finish line.
-		Runner 2 finishes in 1st place.
-		Runner 0 finishes in 2nd place.
-		Runner 1 finishes in 3rd place.
-		*/
 		</script>
 	</body>
 </html>
