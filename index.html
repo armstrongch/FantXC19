@@ -33,7 +33,7 @@
 			var raceRoundNum = 0;
 
 			var raceCanvas = $("#raceCanvas")[0];
-			//var ctx = raceCanvas.getContext("2d");
+			var ctx = raceCanvas.getContext("2d");
 
 			var cardList = 
 			{
@@ -101,7 +101,12 @@
 				showMessage("Race will have " + numRunners + " runners.");
 				raceRoundNum = 0;
 			}
-
+			
+			function drawRunners()
+			{
+				ctx.clearRect(0, 0, raceCanvas.width, raceCanvas.height);
+			}
+			
 			function runRace()
 			{
 				raceRoundNum++;
@@ -109,6 +114,7 @@
 				$('#nextRoundButton').prop('disabled', true);
 				raceRound();
 				updateFinisherList(); //Also updates positionBeforeMoving
+				drawRunners();
 				if (runnerList.length > finisherList.length)
 				{
 					$('#nextRoundButton').prop('disabled', false);
