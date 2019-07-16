@@ -77,8 +77,8 @@
 
 			function setupRace()
 			{
-				raceCanvas.width = 500;
-				raceCanvas.height = 200;
+				raceCanvas.width = window.innerWidth * 0.9;
+				raceCanvas.height = window.innerHeight * 0.5;
 				setupRaceRunners(10);
 				runRace();
 			}
@@ -105,6 +105,44 @@
 			function drawRunners()
 			{
 				ctx.clearRect(0, 0, raceCanvas.width, raceCanvas.height);
+				var yDistanceBetweenLines = raceCanvas.height/6;
+				var xCurveDistance = raceCanvas.width * 0.1;
+				ctx.beginPath();
+				for (let i = 0; i < 5; i++)
+				{
+					
+					if ((i == 0) || (i == 2))
+					{
+						ctx.moveTo(xCurveDistance, yDistanceBetweenLines * (i+1));
+						ctx.lineTo(raceCanvas.width - xCurveDistance, yDistanceBetweenLines * (i+1));
+						ctx.bezierCurveTo(raceCanvas.width - xCurveDistance + xCurveDistance*0.75, yDistanceBetweenLines * (i+1), 
+							raceCanvas.width - xCurveDistance + xCurveDistance*0.75, yDistanceBetweenLines * (i+2),
+							raceCanvas.width - xCurveDistance, yDistanceBetweenLines * (i+2));
+					}
+					else if ((i == 1) || (i == 3))
+					{
+						ctx.moveTo(raceCanvas.width - xCurveDistance, yDistanceBetweenLines * (i+1));
+						ctx.lineTo(xCurveDistance, yDistanceBetweenLines * (i+1));
+						ctx.bezierCurveTo(xCurveDistance*0.25, yDistanceBetweenLines * (i+1), 
+							xCurveDistance*0.25, yDistanceBetweenLines * (i+2),
+							xCurveDistance, yDistanceBetweenLines * (i+2));
+					}
+					else if (i == 4)
+					{
+						ctx.moveTo(xCurveDistance, yDistanceBetweenLines * (i+1));
+						ctx.lineTo(raceCanvas.width - xCurveDistance, yDistanceBetweenLines * (i+1));
+					}
+				}
+				//Mile 1: 1609 on line 0
+				//Mile 2: 3218 = 782 on line 1
+				//Mile 3: 4828 = 828 on line 2
+				//Mile 4: 6437 = 1563 on line 3
+				//Mile 5: 8046 = 46 on line 4
+				//Mile 6: 9656 = 1656 on line 4
+				//ctx.moveTo(
+				
+				
+				ctx.stroke();
 			}
 			
 			function runRace()
