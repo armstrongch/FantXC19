@@ -134,15 +134,42 @@
 					}
 				}
 				//Mile 1: 1609 on line 0
+				ctx.moveTo(xCurveDistance + raceCanvas.width*0.8*1609/2000, yDistanceBetweenLines-15);
+				ctx.lineTo(xCurveDistance + raceCanvas.width*0.8*1609/2000, yDistanceBetweenLines+15);
 				//Mile 2: 3218 = 782 on line 1
+				ctx.moveTo(xCurveDistance + raceCanvas.width*0.8*782/2000, yDistanceBetweenLines*2-15);
+				ctx.lineTo(xCurveDistance + raceCanvas.width*0.8*782/2000, yDistanceBetweenLines*2+15);
 				//Mile 3: 4828 = 828 on line 2
+				ctx.moveTo(xCurveDistance + raceCanvas.width*0.8*828/2000, yDistanceBetweenLines*3-15);
+				ctx.lineTo(xCurveDistance + raceCanvas.width*0.8*828/2000, yDistanceBetweenLines*3+15);
 				//Mile 4: 6437 = 1563 on line 3
+				ctx.moveTo(xCurveDistance + raceCanvas.width*0.8*1563/2000, yDistanceBetweenLines*4-15);
+				ctx.lineTo(xCurveDistance + raceCanvas.width*0.8*1563/2000, yDistanceBetweenLines*4+15);
 				//Mile 5: 8046 = 46 on line 4
+				ctx.moveTo(xCurveDistance + raceCanvas.width*0.8*46/2000, yDistanceBetweenLines*5-15);
+				ctx.lineTo(xCurveDistance + raceCanvas.width*0.8*46/2000, yDistanceBetweenLines*5+15);
 				//Mile 6: 9656 = 1656 on line 4
-				//ctx.moveTo(
-				
-				
+				ctx.moveTo(xCurveDistance + raceCanvas.width*0.8*1656/2000, yDistanceBetweenLines*5-15);
+				ctx.lineTo(xCurveDistance + raceCanvas.width*0.8*1656/2000, yDistanceBetweenLines*5+15);
 				ctx.stroke();
+				
+				for (let i = 0; i < runnerList.length; i++)
+				{
+					var runner = runnerList[i];
+					if (runner.position < 10000)
+					{
+						ctx.beginPath()
+						var runnerYPos = yDistanceBetweenLines;
+						var runnerXPos = runner.position;
+						while (runnerXPos > 2000)
+						{
+							runnerXPos -= 2000;
+							runnerYPos += yDistanceBetweenLines;
+						}
+						ctx.arc(xCurveDistance + runnerXPos/2000 * raceCanvas.width*0.8 - 10 + Math.random()*20, runnerYPos - 10 + Math.random()*20, 20, 0, 2*Math.PI);
+						ctx.stroke();
+					}
+				}
 			}
 			
 			function runRace()
