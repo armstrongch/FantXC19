@@ -18,6 +18,7 @@
 					<canvas id="raceCanvas" width="0" height="0"></canvas>
 				</td></tr>
 				<tr><td>
+					<p id="playerInfo"></p>
 					<button id="nextRoundButton" onclick="runRace()" disabled="true">Next Round</button>
 				</td></tr>
 				<tr><td>
@@ -279,7 +280,15 @@
 							cardToPlayIndex++;
 						}
 						
-						
+						if (runner.isPlayer)
+						{
+							var distanceFromFinish = 10000 - runner.position;
+							var place = runnerList.length + 1 - i;
+							$('#playerInfo').html(
+								"Remaining Energy: " + runner.energy + "%" + "<br/>" +
+								distanceFromFinish + " meters from the finish, in " + ordinal_suffix_of(place) + " place."
+							);
+						}
 						if (cardToPlayIndex <= runner.hand.length - 1)
 						{
 							playCard(runner, runner.hand[cardToPlayIndex]);
@@ -314,9 +323,15 @@
 				}
 				var distanceFromFinish = 10000 - runner.position;
 				
+				var runnerName = "Runner " + runner.id;
+				if (runner.isPlayer)
+				{
+					runnerName = "Player";
+				}
+				
 				if (runner.position < 10000)
 				{
-					showMessage("Runner " + runner.id + " plays " + cardName + " (" + distanceFromFinish + " meters from the finish, " + runner.energy + "% energy remaining).");
+					showMessage(runnerName + " plays " + cardName + " (" + distanceFromFinish + " meters from the finish, " + runner.energy + "% energy remaining).");
 				}
 				else
 				{
