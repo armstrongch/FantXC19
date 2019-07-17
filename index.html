@@ -98,6 +98,7 @@
 					}
 					runnerList.push(runner);
 				}
+				runnerList[0].isPlayer = true;
 				showMessage("Race will have " + numRunners + " runners.");
 				raceRoundNum = 0;
 			}
@@ -107,6 +108,8 @@
 				ctx.clearRect(0, 0, raceCanvas.width, raceCanvas.height);
 				var yDistanceBetweenLines = raceCanvas.height/6;
 				var xCurveDistance = raceCanvas.width * 0.1;
+				ctx.strokeStyle = "green";
+				ctx.lineWidth = 3;
 				ctx.beginPath();
 				for (let i = 0; i < 5; i++)
 				{
@@ -153,11 +156,23 @@
 				ctx.lineTo(xCurveDistance + raceCanvas.width*0.8*1656/2000, yDistanceBetweenLines*5+15);
 				ctx.stroke();
 				
+				ctx.lineWidth = 2;
+				
+				runnerList.sort(dynamicSort("isPlayer"));
+				
 				for (let i = 0; i < runnerList.length; i++)
 				{
 					var runner = runnerList[i];
 					if (runner.position < 10000)
 					{
+						if (runner.isPlayer)
+						{
+							ctx.strokeStyle = "red";
+						}
+						else
+						{
+							ctx.strokeStyle = "black";
+						}
 						ctx.beginPath()
 						var runnerYPos = 1;
 						var runnerXPos = runner.position;
