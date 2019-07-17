@@ -159,14 +159,18 @@
 					if (runner.position < 10000)
 					{
 						ctx.beginPath()
-						var runnerYPos = yDistanceBetweenLines;
+						var runnerYPos = 1;
 						var runnerXPos = runner.position;
 						while (runnerXPos > 2000)
 						{
 							runnerXPos -= 2000;
-							runnerYPos += yDistanceBetweenLines;
+							runnerYPos ++;
 						}
-						ctx.arc(xCurveDistance + runnerXPos/2000 * raceCanvas.width*0.8 - 10 + Math.random()*20, runnerYPos - 10 + Math.random()*20, 20, 0, 2*Math.PI);
+						if (runnerYPos%2 == 0)
+						{
+							runnerXPos = 2000 - runnerXPos;
+						}
+						ctx.arc(xCurveDistance + runnerXPos/2000 * raceCanvas.width*0.8 - 10 + Math.random()*20, runnerYPos*yDistanceBetweenLines - 10 + Math.random()*20, 20, 0, 2*Math.PI);
 						ctx.stroke();
 					}
 				}
