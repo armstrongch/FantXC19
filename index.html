@@ -8,6 +8,14 @@
 				border: 1px solid black;
 				display: inline;
 			}
+			.card {
+				border: 1px solid black;
+				width: 15%;
+				min-height: 200px;
+				float: left;
+				margin: 5px;
+				padding: 5px;
+			}
 		</style>
 	</head>
 	<script src="https://ajax.googleapis.com/ajax/libs/jquery/3.3.1/jquery.min.js"></script>
@@ -19,7 +27,8 @@
 				</td></tr>
 				<tr><td>
 					<p id="playerInfo"></p>
-					<button id="nextRoundButton" onclick="runRace()" disabled="true">Next Round</button>
+					<div id="cards">
+					</div>
 				</td></tr>
 				<tr><td>
 					<p id="testP"></p>
@@ -36,11 +45,13 @@
 			var raceCanvas = $("#raceCanvas")[0];
 			var ctx = raceCanvas.getContext("2d");
 
+			var cardTemplate = '<div class="card"><p style="text-align: center;">[Card Name]</p><p>Distance: [DDDD] meters</p><p>Cost: [EE]% energy</p><p>Special: [T]</p><button style="display: block; margin: 0 auto;" disabled="true">Select</button></div>';
+
 			var cardList = 
 			{
-				"Run": new card(1000, 10, ""),
-				"Surge": new card(1400, 20, ""),
-				"Fatigue": new card(600, 0, ""),
+				"Run": new card(1000, 10, "None"),
+				"Surge": new card(1400, 20, "None"),
+				"Fatigue": new card(600, 0, "None"),
 				"Recover": new card(800, 5, "Gain 10% Energy"),
 				"Kick": new card(1600, 6, "Expends all available Energy"),
 				"Coast": new card(1000, 4, "Can only be used while running with a pack"),
@@ -81,7 +92,8 @@
 				raceCanvas.width = window.innerWidth * 0.9;
 				raceCanvas.height = window.innerHeight * 0.5;
 				setupRaceRunners(10);
-				runRace();
+				drawRunners();
+				playerTurn();
 			}
 
 			function setupRaceRunners(numRunners)
@@ -194,7 +206,6 @@
 			{
 				raceRoundNum++;
 				showMessage("<strong>Race Round " + raceRoundNum + "</strong>");
-				$('#nextRoundButton').prop('disabled', true);
 				raceRound();
 				updateFinisherList(); //Also updates positionBeforeMoving
 				drawRunners();
@@ -202,6 +213,7 @@
 				{
 					$('#nextRoundButton').prop('disabled', false);
 				}
+				playerTurn();
 			}
 			
 			function updateFinisherList()
@@ -222,8 +234,130 @@
 				for (let i = 0; i < finishersThisTurn.length; i ++)
 				{
 					finisherList.push(finishersThisTurn[i]);
-					showMessage("Runner " + finishersThisTurn[i].id + " finishes in " + ordinal_suffix_of(finisherList.length) + " place.");
+					var runnerName = "Runner " + finishersThisTurn[i].id;
+					if (finishersThisTurn[i].isPlayer)
+					{
+						runnerName = "Player";
+					}
+					
+					showMessage(runnerName + " finishes in " + ordinal_suffix_of(finisherList.length) + " place.");
 				}
+			}
+			
+			function playerTurn()
+			{
+				var runner;
+				runnerList.sort(dynamicSort("position"));
+				for (let i = 0; i < runnerList.length; i++)
+				{
+					if (runnerList[i].isPlayer)
+					{
+						var runner = runnerList[i];
+						var place = runnerList.length - i;
+						showPlayerInfo(runner, place);
+						
+						$('#cards').html('');
+						
+						var validChecks = getValidCards(runner);
+						
+						for (let i = 0; i < runner.hand.length; i++)
+						{
+							showPlayerCard(runner, runner.hand[i], validChecks, i);
+						}
+						showPlayerCard(runner, "Fatigue", validChecks);
+						i = runnerList.length;
+					}
+				}
+			}
+			
+			function showPlayerInfo(runner, place)
+			{
+				var distanceFromFinish = 10000 - runner.position;
+				if (distanceFromFinish > 0)
+				{
+					$('#playerInfo').html(
+						"Remaining Energy: " + runner.energy + "%" + "<br/>" +
+						distanceFromFinish + " meters from the finish, in " + ordinal_suffix_of(place) + " place." + "<br/>" +
+						"Cards remaining in deck: " + runner.deck.length
+					);
+				}
+				else
+				{
+					$('#playerInfo').html("To-do: Show player finish position here!!");
+				}
+			}
+			
+			function showPlayerCard(runner, cardName, validChecks, handIndex)
+			{
+				//'<div class="card"><p style="text-align: center;">[Card Name]</p><p>Distance: [DDDD] meters</p><p>Cost: [EE]% energy</p><p>Special: [T]</p><button style="display: block; margin: 0 auto;" disabled="true">Select</button></div>'
+				var isCoastValid = validChecks[0];
+				var isReelInValid = validChecks[1];
+				var handCard = cardTemplate;
+				var card = cardList[cardName];
+				handCard = handCard.replace("[Card Name]", cardName);
+				handCard = handCard.replace("[DDDD]", card.distance);
+				var convertedEnergy = card.energy * (1 + runner.exhaustion);
+				handCard = handCard.replace("[EE]", convertedEnergy);
+				handCard = handCard.replace("[T]", card.specialText);
+				
+				if ((convertedEnergy <= runner.energy)
+				&& ((isCoastValid) || (cardName != "Coast"))
+				&& ((isReelInValid) || (cardName != "Reel In")))
+				{
+					var buttonHTML = "onclick=\"playPlayerCard('" + cardName + "', " + handIndex + ")\""
+					handCard = handCard.replace("disabled=\"true\"", buttonHTML);
+				}
+				
+				$('#cards').html($('#cards').html() + handCard);
+			}
+			
+			function playPlayerCard(cardName, handIndex)
+			{
+				$('#cards').html('');
+				
+				for (let i = 0; i < runnerList.length; i++)
+				{
+					if (runnerList[i].isPlayer)
+					{
+						var runner = runnerList[i];
+						i = runnerList.length;
+						playCard(runner, cardName);
+						
+						runner.hand.splice(handIndex, 1);
+						
+						if (runner.deck.length > 0)
+						{
+							runner.hand.push(runner.deck.pop());
+						}
+					}
+				}
+				runRace();
+			}
+			
+			function getValidCards(runner)
+			{
+				var isCoastValid = false;
+				var isReelInValid = false;
+				for (let j = 0; j < runnerList.length; j++)
+				{
+					var anotherRunner = runnerList[j];
+					if (anotherRunner.id != runner.id)
+					{
+						if (anotherRunner.positionBeforeMoving == runner.position)
+						{
+							isCoastValid = true;
+						}
+						else if ((anotherRunner.positionBeforeMoving > runner.position) && (anotherRunner.positionBeforeMoving - runner.position <= 300))
+						{
+							isReelInValid = true;
+						}
+						if ((isCoastValid) && (isReelInValid))
+						{
+							j = runnerList.length;
+						}
+					}
+				}
+				return [isCoastValid, isReelInValid];
 			}
 			
 			function raceRound()
@@ -234,7 +368,7 @@
 				for (let i = 0; i < runnerList.length; i++)
 				{
 					var runner = runnerList[i];
-					if (runner.position < 10000)
+					if ((runner.position < 10000) && (!runner.isPlayer))
 					{
 						runner.hand.sort(
 							function(a,b)
@@ -243,27 +377,9 @@
 							}
 						);
 						
-						var isCoastValid = false;
-						var isReelInValid = false;
-						for (let j = 0; j < runnerList.length; j++)
-						{
-							var anotherRunner = runnerList[j];
-							if (anotherRunner.id != runner.id)
-							{
-								if (anotherRunner.positionBeforeMoving == runner.position)
-								{
-									isCoastValid = true;
-								}
-								else if ((anotherRunner.positionBeforeMoving > runner.position) && (anotherRunner.positionBeforeMoving - runner.position <= 300))
-								{
-									isReelInValid = true;
-								}
-								if ((isCoastValid) && (isReelInValid))
-								{
-									j = runnerList.length;
-								}
-							}
-						}
+						var validChecks = getValidCards(runner);
+						var isCoastValid = validChecks[0];
+						var isReelInValid = validChecks[1];
 						
 						var cardToPlayIndex = 0;
 						while 
@@ -280,15 +396,6 @@
 							cardToPlayIndex++;
 						}
 						
-						if (runner.isPlayer)
-						{
-							var distanceFromFinish = 10000 - runner.position;
-							var place = runnerList.length - i;
-							$('#playerInfo').html(
-								"Remaining Energy: " + runner.energy + "%" + "<br/>" +
-								distanceFromFinish + " meters from the finish, in " + ordinal_suffix_of(place) + " place."
-							);
-						}
 						if (cardToPlayIndex <= runner.hand.length - 1)
 						{
 							playCard(runner, runner.hand[cardToPlayIndex]);
