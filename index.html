@@ -283,7 +283,7 @@
 						if (runner.isPlayer)
 						{
 							var distanceFromFinish = 10000 - runner.position;
-							var place = runnerList.length + 1 - i;
+							var place = runnerList.length - i;
 							$('#playerInfo').html(
 								"Remaining Energy: " + runner.energy + "%" + "<br/>" +
 								distanceFromFinish + " meters from the finish, in " + ordinal_suffix_of(place) + " place."
