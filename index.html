@@ -32,6 +32,11 @@
 				</td></tr>
 			</table>
 		</div>
+		<div id="weekDiv">
+			<p id="weekInfo"></p>
+			<div id="workouts">
+			</div>
+		</div>
 		<p id="infoP"></p>
 		<script>
 			var runnerList = [];
@@ -87,14 +92,30 @@
 				this.specialText = specialText;
 			}
 			
+			function startSeason()
+			{
+				seasonWeek();
+			}
+			
 			function seasonWeek()
 			{
+				$('#raceDiv').css('display', 'none');
+				$('#weekDiv').css('display', 'block');
 				weekNum++;
-				
+				$('#infoP').html("");
+				showMessage("<strong>Race Week " + weekNum + "</strong>");
+				showWorkouts();
+			}
+			
+			function showWorkouts()
+			{
+			
 			}
 			
 			function setupRace()
 			{
+				$('#weekDiv').css('display', 'none');
+				$('#raceDiv').css('display', 'block');
 				raceCanvas.width = window.innerWidth * 0.9;
 				raceCanvas.height = window.innerHeight * 0.5;
 				setupRaceRunners(10);
@@ -210,8 +231,6 @@
 			
 			function runRace()
 			{
-				raceRoundNum++;
-				showMessage("<strong>Race Round " + raceRoundNum + "</strong>");
 				raceRound();
 				updateFinisherList(); //Also updates positionBeforeMoving
 				drawRunners();
@@ -256,6 +275,9 @@
 			
 			function playerTurn()
 			{
+				raceRoundNum++;
+				showMessage("<strong>Race Round " + raceRoundNum + "</strong>");
+				
 				var runner;
 				runnerList.sort(dynamicSort("position"));
 				for (let i = 0; i < runnerList.length; i++)
