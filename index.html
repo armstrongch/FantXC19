@@ -238,6 +238,10 @@
 					if (finishersThisTurn[i].isPlayer)
 					{
 						runnerName = "Player";
+						
+						$('#playerInfo').html(
+							"Finished in " + ordinal_suffix_of(finisherList.length) + " place with " + finishersThisTurn[i].energy + "% energy remaining"
+						);
 					}
 					
 					showMessage(runnerName + " finishes in " + ordinal_suffix_of(finisherList.length) + " place.");
@@ -280,10 +284,6 @@
 						distanceFromFinish + " meters from the finish, in " + ordinal_suffix_of(place) + " place." + "<br/>" +
 						"Cards remaining in deck: " + runner.deck.length
 					);
-				}
-				else
-				{
-					$('#playerInfo').html("To-do: Show player finish position here!!");
 				}
 			}
 			
