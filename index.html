@@ -46,16 +46,17 @@
 			var ctx = raceCanvas.getContext("2d");
 
 			var cardTemplate = '<div class="card"><p style="text-align: center;">[Card Name]</p><p>Distance: [DDDD] meters</p><p>Cost: [EE]% energy</p><p>Special: [T]</p><button style="display: block; margin: 0 auto;" disabled="true">Select</button></div>';
-
+			
+			//this.deck = ["Run", "Run", "Run", "Surge", "Recover", "Recover", "Kick", "Coast", "Coast", "Reel In", "Reel In"];
 			var cardList = 
 			{
-				"Run": new card(1000, 10, "None"),
-				"Surge": new card(1400, 20, "None"),
-				"Fatigue": new card(600, 0, "None"),
-				"Recover": new card(800, 5, "Gain 10% Energy"),
-				"Kick": new card(1600, 10, "Expends all available Energy"),
-				"Coast": new card(1000, 5, "Can only be used while running with a pack"),
-				"Reel In": new card(1200, 10, "Can only be used within 300 meters behind the next runner.")
+				"Run": new card(800, 10, "None"), //2400
+				"Surge": new card(1500, 20, "None"), //3000
+				"Fatigue": new card(600, 0, "None"), 
+				"Recover": new card(600, 5, "Gain 10% Energy"), //1200
+				"Kick": new card(1600, 10, "Expends all available Energy"), //1600
+				"Coast": new card(700, 5, "Can only be used while running with a pack"), //1400
+				"Reel In": new card(1000, 10, "Can only be used within 300 meters behind the next runner.") //2000
 			};
 
 			function getCardPriority(runner, cardName)
@@ -268,7 +269,7 @@
 						{
 							showPlayerCard(runner, runner.hand[i], validChecks, i);
 						}
-						showPlayerCard(runner, "Fatigue", validChecks);
+						showPlayerCard(runner, "Fatigue", validChecks, -1);
 						i = runnerList.length;
 					}
 				}
@@ -323,7 +324,10 @@
 						i = runnerList.length;
 						playCard(runner, cardName);
 						
-						runner.hand.splice(handIndex, 1);
+						if (handIndex != -1)
+						{
+							runner.hand.splice(handIndex, 1);
+						}
 						
 						if (runner.deck.length > 0)
 						{
@@ -453,7 +457,7 @@
 				this.position = 0;
 				this.positionBeforeMoving = 0;
 				this.energy = 100;
-				this.deck = ["Run", "Run", "Run", "Surge", "Surge", "Recover", "Recover", "Kick", "Coast", "Coast", "Reel In", "Reel In"];
+				this.deck = ["Run", "Run", "Run", "Surge", "Recover", "Recover", "Kick", "Coast", "Coast", "Reel In", "Reel In"];
 				this.hand = [];
 				this.discard = [];
 				this.finished = false;
