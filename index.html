@@ -10,8 +10,8 @@
 			}
 			.card {
 				border: 1px solid black;
-				width: 15%;
-				min-height: 200px;
+				width: 175px;
+				height: 225px;
 				float: left;
 				margin: 5px;
 				padding: 5px;
@@ -30,17 +30,16 @@
 					<div id="cards">
 					</div>
 				</td></tr>
-				<tr><td>
-					<p id="testP"></p>
-				</td></tr>
 			</table>
 		</div>
-		
+		<p id="infoP"></p>
 		<script>
 			var runnerList = [];
 			var finisherList = [];
 			var handSize = 3;
 			var raceRoundNum = 0;
+			var weekNum = 0;
+			
 
 			var raceCanvas = $("#raceCanvas")[0];
 			var ctx = raceCanvas.getContext("2d");
@@ -87,7 +86,13 @@
 				this.energy = energy;
 				this.specialText = specialText;
 			}
-
+			
+			function seasonWeek()
+			{
+				weekNum++;
+				
+			}
+			
 			function setupRace()
 			{
 				raceCanvas.width = window.innerWidth * 0.9;
@@ -506,14 +511,14 @@
 			
 			function showMessage(text)
 			{
-				if ($('#testP').html().length == 0)
+				if ($('#infoP').html().length == 0)
 				{
-					$('#testP').html(text);
+					$('#infoP').html(text);
 				}
 				else
 				{
-					$('#testP').html(
-						$('#testP').html()
+					$('#infoP').html(
+						$('#infoP').html()
 						+ "<br/>"
 						+ text
 					);
