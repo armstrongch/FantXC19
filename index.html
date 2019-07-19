@@ -264,7 +264,8 @@
 					{
 						var runner = runnerList[i];
 						var place = runnerList.length - i;
-						showPlayerInfo(runner, place);
+						var leader = runnerList[0];
+						showPlayerInfo(runner, place, leader);
 						
 						$('#cards').html('');
 						
@@ -280,14 +281,16 @@
 				}
 			}
 			
-			function showPlayerInfo(runner, place)
+			function showPlayerInfo(runner, place, leader)
 			{
 				var distanceFromFinish = 10000 - runner.position;
+				var distanceBehindLeader = leader.position - runner.position;
 				if (distanceFromFinish > 0)
 				{
 					$('#playerInfo').html(
 						"Remaining Energy: " + runner.energy + "%" + "<br/>" +
 						distanceFromFinish + " meters from the finish, in " + ordinal_suffix_of(place) + " place." + "<br/>" +
+						distanceBehindLeader + " meters behind the leader." + "<br/>" + 
 						"Cards remaining in deck: " + runner.deck.length
 					);
 				}
