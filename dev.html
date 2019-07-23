@@ -1,0 +1,712 @@
+<!DOCTYPE html>
+<html>
+	<head>
+		<meta charset="UTF-8">
+		<title>FantXC Simulator 2019</title>
+		<style>
+			canvas {
+				border: 1px solid black;
+				display: inline;
+			}
+			.card {
+				border: 1px solid black;
+				width: 175px;
+				height: 225px;
+				float: left;
+				margin: 5px;
+				padding: 5px;
+			}
+		</style>
+	</head>
+	<script src="https://ajax.googleapis.com/ajax/libs/jquery/3.3.1/jquery.min.js"></script>
+	<body onload="startSeason()">
+		<div id="raceDiv">
+			<table>
+				<tr><td>
+					<canvas id="raceCanvas" width="0" height="0"></canvas>
+				</td></tr>
+				<tr><td>
+					<p id="playerInfo"></p>
+					<div id="cards"></div>
+				</td></tr>
+			</table>
+		</div>
+		<div id="weekDiv">
+			<p id="weekInfo"></p>
+			<div id="workouts"></div>
+		</div>
+		<p id="infoP"></p>
+		<script>
+			var runnerList = [];
+			var finisherList = [];
+			var handSize = 3;
+			var raceRoundNum = 0;
+			var weekNum = 0;
+			var numWeeks = 13;
+			var workoutNum;
+			var workoutsPerWeek = 2;
+			var player;
+			var availablePoints = 0;
+			var requiredPercentage = 20;
+			
+
+			var raceCanvas = $("#raceCanvas")[0];
+			var ctx = raceCanvas.getContext("2d");
+
+			var cardTemplate = '<div class="card"><p style="text-align: center;">[Card Name]</p><p>Distance: [DDDD] meters</p><p>Cost: [EE]% energy</p><p>Special: [T]</p><button style="display: block; margin: 0 auto;" disabled="true">Select</button></div>';
+			
+			var workoutTemplate = '<div id="workouts"><div class="card"><p style="text-align: center;">[Workout Name]</p><p>Type: [TTTT]</p><p>[T]</p><p>Cost: [EE] exhaustion</p><button style="display: block; margin: 0 auto; bottom: 0;" disabled="true">Select</button></div></div>';
+			
+			//this.deck = ["Run", "Run", "Run", "Surge", "Surge", "Recover", "Recover", "Kick", "Coast", "Coast", "Reel In", "Reel In"];
+			var cardList = 
+			{
+				"Run": new card(800, 10, "None"),
+				"Surge": new card(1400, 25, "None"),
+				"Fatigue": new card(600, 0, "None"), 
+				"Recover": new card(600, 5, "Gain 10% Energy"),
+				"Kick": new card(1600, 15, "Expends all available Energy"),
+				"Coast": new card(700, 5, "Can only be used while running with a pack"),
+				"Reel In": new card(1000, 10, "Can only be used within 300 meters behind the next runner")
+			};
+
+			function getCardPriority(runner, cardName)
+			{
+				var priority = 0;
+				if (runner.energy < (cardList[cardName].energy * 1 + runner.exhaustion).toFixed(0))
+				{
+					priority -= 10000;
+				}
+				
+				switch(cardName)
+				{
+					case "Kick":
+						priority += cardList[cardName].distance;
+						var distanceFromFinishAfterKick = 10000 - runner.position - cardList[cardName].distance;
+						priority -= distanceFromFinishAfterKick;
+						break;
+					default:
+						priority += cardList[cardName].distance;
+						break;
+				}
+				return priority;
+			}
+
+			function card(distance, energy, specialText)
+			{
+				this.distance = distance;
+				this.energy = energy;
+				this.specialText = specialText;
+			}
+			
+			var workout;
+			var workoutList = [];
+			
+			function startSeason()
+			{
+				player = new createRunner(runnerList);
+				player.isPlayer = true;
+				setupWorkouts();
+				seasonWeek();
+			}
+			
+			function showWeekInfo()
+			{
+				var weeksBeforeChamps = numWeeks - weekNum;
+				var exhaustionModifier = (1 + player.exhaustion).toFixed(2);
+				
+				var percentile = 100 - Math.floor((player.points / availablePoints)*100);
+				var currentPerformance = "Current season performance: " + player.points + " points of a possible " + availablePoints + ", top " + percentile + "%" + "<br/>";
+				if (weekNum == 1)
+				{
+					currentPerformance = "";
+				}
+				$('#weekInfo').html(
+				    "<strong>Week " + weekNum + "</strong>" + "<br/>" +
+				    "Races before the championship: " + weeksBeforeChamps + "<br/>" +
+					"Requred season performance to make the championship: top " + requiredPercentage + "%" + "<br/>" +
+					currentPerformance +
+					"Card Energy Cost modifier (1 + exhaustion): " + exhaustionModifier + "<br/>" +
+					"Select workout " + workoutNum + " of " + workoutsPerWeek + ":"
+				);
+			}
+			
+			function seasonWeek()
+			{
+				workoutNum = 1;
+				weekNum++;
+				showWeekInfo();
+				$('#raceDiv').css('display', 'none');
+				$('#weekDiv').css('display', 'block');
+				$('#infoP').html("");
+				showWorkouts();
+			}
+			
+			function selectWorkout(workoutName, cost)
+			{
+				player.exhaustion += cost;
+				player.workouts.push(workoutName);
+				if (workoutNum < workoutsPerWeek)
+				{
+					workoutNum++;
+					showWeekInfo();
+					showWorkouts();
+				}
+				else
+				{
+					setupRace();
+				}
+			}
+			
+			/*this.deck = [
+			"Run", "Run", "Run", 
+			"Surge", "Surge", 
+			"Recover", "Recover", 
+			"Kick", 
+			"Coast", "Coast", 
+			"Reel In", "Reel In"];*/
+			
+			function setupWorkouts()
+			{
+				workoutList.push(["Easy Run", "Rest", "Reduce exhaustion by 0.30"]);
+				workoutList.push(["Cross Train", "Rest", "Reduce exhaustion by 50% (rounded to nearest 0.10)"]);
+				workoutList.push(["Day Off", "Rest", "Increase energy by 20% during this week's race"]);
+				
+				workoutList.push(["Long Run", "Endurance", "Permenantly increase starting energy by 25%"]);
+				workoutList.push(["Steady Volume", "Endurance", "Reduce exhaustion from workouts and races by 0.10"]);
+				workoutList.push(["Tempo", "Endurance", "Reduce cost of 'Run' and 'Coast' cards by 5% energy"]);
+				workoutList.push(["Cruise Intervals", "Endurance", "Reduce the cost of 'Kick' cards by 5% energy"]);
+				
+				workoutList.push(["Threshold Repeats", "Pace", "Increase distance of 'Surge' and 'Reel In' cards by 200 meters"]);
+				workoutList.push(["Progressive Run", "Pace", "Increase distance of 'Run' cards by 300 meters"]);
+				workoutList.push(["Double Workout", "Pace", "Add an additional 'Run' card to your deck"]);
+				workoutList.push(["Weight Lifting", "Pace", "Increase the cost of all cards by 5% and increase the distance of all cards by 200 meters"]);
+				
+				workoutList.push(["Compound Sets", "Speed", "Increase distance of 'Kick' cards by 100 meters"]);
+				workoutList.push(["Fartleks", "Speed", "Add an additional 'Surge' card to your deck"]);
+				workoutList.push(["Hill Sprints", "Speed", "Increase distance of 'Surge' and 'Reel In' cards by 100 meters"]);
+				workoutList.push(["Full-Recovery Repeats", "Speed", "Increase the distance of all cards by 200 meters when you have more than 80% energy"]);
+			}
+			
+			function showWorkouts()
+			{
+				$('#workouts').html('');
+				showWorkout("Rest", 0);
+				showWorkout("Endurance", 0.3);
+				showWorkout("Pace", 0.2);
+				showWorkout("Speed", 0.1);
+			}
+			
+			function showWorkout(type, cost)
+			{
+				workoutsOfType = [];
+				for (let i = 0; i < workoutList.length; i++)
+				{
+					if (workoutList[i][1] == type)
+					{
+						workoutsOfType.push(workoutList[i]);
+					}
+				}
+				workoutToAdd = workoutsOfType[Math.floor(Math.random()*workoutsOfType.length)];
+				
+				var buttonHTML = "onclick=\"selectWorkout('" + workoutToAdd[0] + "', " + cost + ")\""
+				
+				var workoutHTML = workoutTemplate;
+				workoutHTML = workoutHTML.replace("disabled=\"true\"", buttonHTML);
+				workoutHTML = workoutHTML.replace("[TTTT]", type);
+				workoutHTML = workoutHTML.replace("[EE]", cost.toFixed(2));
+				workoutHTML = workoutHTML.replace("[Workout Name]", workoutToAdd[0]);
+				workoutHTML = workoutHTML.replace("[T]", workoutToAdd[2]);
+				$('#workouts').html($('#workouts').html() + workoutHTML);
+			}
+			
+			function setupRace()
+			{
+				$('#weekDiv').css('display', 'none');
+				$('#raceDiv').css('display', 'block');
+				$('#infoP').html("");
+				raceCanvas.width = window.innerWidth * 0.9;
+				raceCanvas.height = window.innerHeight * 0.5;
+				setupRaceRunners(10 + Math.floor(Math.random() * 20));
+				drawRunners();
+				playerTurn();
+			}
+
+			function setupRaceRunners(numRunners)
+			{
+				availablePoints += numRunners;
+				
+				runnerList = [];
+				
+				player.deck.concat(player.hand);
+				player.deck.concat(player.discard);
+				shuffle(player.deck);
+				player.hand = [];
+				player.discard = [];
+				for (let i = 0; i < handSize; i++)
+				{
+					player.hand.push(player.deck.pop());
+				}
+				
+				runnerList[0] = player;
+				finisherList = [];
+				for (let i = 1; i < numRunners; i++)
+				{
+					var runner = new createRunner(runnerList);
+					shuffle(runner.deck);
+					//deck.length MUST be more than handSize, or this WILL break
+					
+					runner.deck.concat(player.hand);
+					runner.deck.concat(player.discard);
+					runner.hand = [];
+					runner.discard = [];
+					for (let i = 0; i < handSize; i++)
+					{
+						runner.hand.push(runner.deck.pop());
+					}
+					runnerList.push(runner);
+				}
+				showMessage("Race will have " + numRunners + " runners.");
+				raceRoundNum = 0;
+			}
+			
+			function drawRunners()
+			{
+				ctx.clearRect(0, 0, raceCanvas.width, raceCanvas.height);
+				var yDistanceBetweenLines = raceCanvas.height/6;
+				var xCurveDistance = raceCanvas.width * 0.1;
+				ctx.strokeStyle = "green";
+				ctx.beginPath();
+				
+				for (let i = 0; i < 5; i++)
+				{
+					
+					if ((i == 0) || (i == 2))
+					{
+						ctx.moveTo(xCurveDistance, yDistanceBetweenLines * (i+1));
+						ctx.lineTo(raceCanvas.width - xCurveDistance, yDistanceBetweenLines * (i+1));
+						ctx.bezierCurveTo(raceCanvas.width - xCurveDistance + xCurveDistance*0.75, yDistanceBetweenLines * (i+1), 
+							raceCanvas.width - xCurveDistance + xCurveDistance*0.75, yDistanceBetweenLines * (i+2),
+							raceCanvas.width - xCurveDistance, yDistanceBetweenLines * (i+2));
+					}
+					else if ((i == 1) || (i == 3))
+					{
+						ctx.moveTo(raceCanvas.width - xCurveDistance, yDistanceBetweenLines * (i+1));
+						ctx.lineTo(xCurveDistance, yDistanceBetweenLines * (i+1));
+						ctx.bezierCurveTo(xCurveDistance*0.25, yDistanceBetweenLines * (i+1), 
+							xCurveDistance*0.25, yDistanceBetweenLines * (i+2),
+							xCurveDistance, yDistanceBetweenLines * (i+2));
+					}
+					else if (i == 4)
+					{
+						ctx.moveTo(xCurveDistance, yDistanceBetweenLines * (i+1));
+						ctx.lineTo(raceCanvas.width - xCurveDistance, yDistanceBetweenLines * (i+1));
+					}
+				}
+				//Mile 1: 1609 on line 0
+				ctx.moveTo(xCurveDistance + raceCanvas.width*0.8*1609/2000, yDistanceBetweenLines-15);
+				ctx.lineTo(xCurveDistance + raceCanvas.width*0.8*1609/2000, yDistanceBetweenLines+15);
+				//Mile 2: 3218 = 782 on line 1
+				ctx.moveTo(xCurveDistance + raceCanvas.width*0.8*782/2000, yDistanceBetweenLines*2-15);
+				ctx.lineTo(xCurveDistance + raceCanvas.width*0.8*782/2000, yDistanceBetweenLines*2+15);
+				//Mile 3: 4828 = 828 on line 2
+				ctx.moveTo(xCurveDistance + raceCanvas.width*0.8*828/2000, yDistanceBetweenLines*3-15);
+				ctx.lineTo(xCurveDistance + raceCanvas.width*0.8*828/2000, yDistanceBetweenLines*3+15);
+				//Mile 4: 6437 = 1563 on line 3
+				ctx.moveTo(xCurveDistance + raceCanvas.width*0.8*1563/2000, yDistanceBetweenLines*4-15);
+				ctx.lineTo(xCurveDistance + raceCanvas.width*0.8*1563/2000, yDistanceBetweenLines*4+15);
+				//Mile 5: 8046 = 46 on line 4
+				ctx.moveTo(xCurveDistance + raceCanvas.width*0.8*46/2000, yDistanceBetweenLines*5-15);
+				ctx.lineTo(xCurveDistance + raceCanvas.width*0.8*46/2000, yDistanceBetweenLines*5+15);
+				//Mile 6: 9656 = 1656 on line 4
+				ctx.moveTo(xCurveDistance + raceCanvas.width*0.8*1656/2000, yDistanceBetweenLines*5-15);
+				ctx.lineTo(xCurveDistance + raceCanvas.width*0.8*1656/2000, yDistanceBetweenLines*5+15);
+				ctx.stroke();
+				
+				runnerList.sort(dynamicSort("isPlayer"));
+				
+				for (let i = 0; i < runnerList.length; i++)
+				{
+					var runner = runnerList[i];
+					if (runner.position < 10000)
+					{
+						if (runner.isPlayer)
+						{
+							ctx.strokeStyle = "red";
+						}
+						else
+						{
+							ctx.strokeStyle = "black";
+						}
+						ctx.beginPath()
+						var runnerYPos = 1;
+						var runnerXPos = runner.position;
+						while (runnerXPos > 2000)
+						{
+							runnerXPos -= 2000;
+							runnerYPos ++;
+						}
+						if (runnerYPos%2 == 0)
+						{
+							runnerXPos = 2000 - runnerXPos;
+						}
+						ctx.arc(xCurveDistance + runnerXPos/2000 * raceCanvas.width*0.8 - 10 + Math.random()*20, runnerYPos*yDistanceBetweenLines - 10 + Math.random()*20, 20, 0, 2*Math.PI);
+						ctx.stroke();
+					}
+				}
+			}
+			
+			function runRace()
+			{
+				raceRound();
+				updateFinisherList(); //Also updates positionBeforeMoving
+				drawRunners();
+				if (runnerList.length > finisherList.length)
+				{
+					$('#nextRoundButton').prop('disabled', false);
+				}
+				if (player.position >= 10000)
+				{
+					endRace();
+				}
+				else
+				{
+					playerTurn();
+				}
+			}
+			
+			function endRace()
+			{
+				$('#cards').html('<button onclick="seasonWeek()">Continue</button>');
+			}
+			
+			function updateFinisherList()
+			{
+				//Using a temporary list in case we want to introduce an additional tiebreaker later
+				var finishersThisTurn = [];
+				for (let i = 0; i < runnerList.length; i++)
+				{
+					var runner = runnerList[i];
+					runner.positionBeforeMoving = runner.position;
+					if ((runner.position >= 10000) && (runner.finished == false))
+					{
+						finishersThisTurn.push(runner);
+						runner.finished = true;
+					}
+				}
+				finishersThisTurn.sort(dynamicSort("-position"));
+				for (let i = 0; i < finishersThisTurn.length; i ++)
+				{
+					finisherList.push(finishersThisTurn[i]);
+					var runnerName = "Runner " + finishersThisTurn[i].id;
+					var pointsScored = runnerList.length - finisherList.length + 1;
+					finishersThisTurn[i].points += pointsScored;
+					var exhaustionHTML = "";
+					if (finishersThisTurn[i].energy < 50)
+					{
+						var exhaustionGained = Math.floor((50 - finishersThisTurn[i].energy)/10) * 0.1;
+						exhaustionGained = exhaustionGained.toFixed(2);
+						exhaustionHTML = "<br/>Gained " + exhaustionGained + " exhaustion, (0.10 per 10% energy below 50%).";
+						finishersThisTurn[i].exhaustion = finishersThisTurn[i].exhaustion + parseFloat(exhaustionGained);
+					}
+					 
+					if (finishersThisTurn[i].isPlayer)
+					{
+						runnerName = "Player";
+						
+						$('#playerInfo').html(
+							"Finished in " + ordinal_suffix_of(finisherList.length) + " place with " + finishersThisTurn[i].energy + "% energy remaining, scoring " + pointsScored + " points." + exhaustionHTML
+						);
+					}
+					
+					showMessage(runnerName + " finishes in " + ordinal_suffix_of(finisherList.length) + " place");
+				}
+			}
+			
+			function playerTurn()
+			{
+				raceRoundNum++;
+				showMessage("<strong>Race Round " + raceRoundNum + "</strong>");
+				
+				runnerList.sort(dynamicSort("position"));
+				for (let i = 0; i < runnerList.length; i++)
+				{
+					if (runnerList[i].isPlayer)
+					{
+						var runner = runnerList[i];
+						var place = runnerList.length - i;
+						var leader = runnerList[runnerList.length - 1];
+						showPlayerInfo(runner, place, leader);
+						
+						$('#cards').html('');
+						
+						var validChecks = getValidCards(runner);
+						
+						for (let i = 0; i < runner.hand.length; i++)
+						{
+							showPlayerCard(runner, runner.hand[i], validChecks, i);
+						}
+						showPlayerCard(runner, "Fatigue", validChecks, -1);
+						i = runnerList.length;
+					}
+				}
+			}
+			
+			function showPlayerInfo(runner, place, leader)
+			{
+				var distanceFromFinish = 10000 - runner.position;
+				var leaderText = "";
+				if (leader.position < 10000)
+				{
+					var distanceBehindLeader = leader.position - runner.position;
+					leaderText = distanceBehindLeader + " meters behind the leader." + "<br/>"
+				}
+				else
+				{
+					leaderText = finisherList.length + " runners have finished.";
+				}
+				if (distanceFromFinish > 0)
+				{
+					$('#playerInfo').html(
+						"Remaining Energy: " + runner.energy + "%" + "<br/>" +
+						distanceFromFinish + " meters from the finish, in " + ordinal_suffix_of(place) + " place." + "<br/>" +
+						leaderText +
+						"Cards remaining in deck: " + runner.deck.length
+					);
+				}
+			}
+			
+			function showPlayerCard(runner, cardName, validChecks, handIndex)
+			{
+				//'<div class="card"><p style="text-align: center;">[Card Name]</p><p>Distance: [DDDD] meters</p><p>Cost: [EE]% energy</p><p>Special: [T]</p><button style="display: block; margin: 0 auto;" disabled="true">Select</button></div>'
+				var isCoastValid = validChecks[0];
+				var isReelInValid = validChecks[1];
+				var handCard = cardTemplate;
+				var card = cardList[cardName];
+				handCard = handCard.replace("[Card Name]", cardName);
+				handCard = handCard.replace("[DDDD]", card.distance);
+				var convertedEnergy = (card.energy * (1 + runner.exhaustion)).toFixed(0);
+				handCard = handCard.replace("[EE]", convertedEnergy);
+				handCard = handCard.replace("[T]", card.specialText);
+				
+				if ((convertedEnergy <= runner.energy)
+				&& ((isCoastValid) || (cardName != "Coast"))
+				&& ((isReelInValid) || (cardName != "Reel In")))
+				{
+					var buttonHTML = "onclick=\"playPlayerCard('" + cardName + "', " + handIndex + ")\""
+					handCard = handCard.replace("disabled=\"true\"", buttonHTML);
+				}
+				
+				$('#cards').html($('#cards').html() + handCard);
+			}
+			
+			function playPlayerCard(cardName, handIndex)
+			{
+				$('#cards').html('');
+				
+				for (let i = 0; i < runnerList.length; i++)
+				{
+					if (runnerList[i].isPlayer)
+					{
+						var runner = runnerList[i];
+						i = runnerList.length;
+						playCard(runner, cardName);
+						
+						if (handIndex != -1)
+						{
+							runner.hand.splice(handIndex, 1);
+						}
+						
+						if (runner.deck.length > 0)
+						{
+							runner.hand.push(runner.deck.pop());
+						}
+					}
+				}
+				runRace();
+			}
+			
+			function getValidCards(runner)
+			{
+				var isCoastValid = false;
+				var isReelInValid = false;
+				for (let j = 0; j < runnerList.length; j++)
+				{
+					var anotherRunner = runnerList[j];
+					if (anotherRunner.id != runner.id)
+					{
+						if (anotherRunner.positionBeforeMoving == runner.position)
+						{
+							isCoastValid = true;
+						}
+						else if ((anotherRunner.positionBeforeMoving > runner.position) && (anotherRunner.positionBeforeMoving - runner.position <= 300))
+						{
+							isReelInValid = true;
+						}
+						if ((isCoastValid) && (isReelInValid))
+						{
+							j = runnerList.length;
+						}
+					}
+				}
+				return [isCoastValid, isReelInValid];
+			}
+			
+			function raceRound()
+			{
+				runnerList.sort(dynamicSort("position"));
+				
+				for (let i = 0; i < runnerList.length; i++)
+				{
+					var runner = runnerList[i];
+					if ((runner.position < 10000) && (!runner.isPlayer))
+					{
+						runner.hand.sort(
+							function(a,b)
+							{
+								return getCardPriority(runner, b) - getCardPriority(runner, a);
+							}
+						);
+						
+						var validChecks = getValidCards(runner);
+						var isCoastValid = validChecks[0];
+						var isReelInValid = validChecks[1];
+						
+						var cardToPlayIndex = 0;
+						while 
+						(
+							(cardToPlayIndex <= runner.hand.length - 1) //cardToPlayIndex is in hand
+							&& 
+							(
+								((cardList[runner.hand[0]].energy * 1 + runner.exhaustion).toFixed(0) > runner.energy) //Card costs too much
+								|| ((!isCoastValid) && (runner.hand[cardToPlayIndex] == "Coast")) //Card is Coast and !isCoastValid
+								|| ((!isReelInValid) && (runner.hand[cardToPlayIndex] == "Reel In")) //Card is Reel In and !isReelInValid
+							)
+						)
+						{
+							cardToPlayIndex++;
+						}
+						
+						if (cardToPlayIndex <= runner.hand.length - 1)
+						{
+							playCard(runner, runner.hand[cardToPlayIndex]);
+							runner.discard.push(runner.hand[cardToPlayIndex]);
+							runner.hand.splice(cardToPlayIndex, 1);
+						}
+						else
+						{
+							playCard(runner, "Fatigue");
+						}
+						if (runner.deck.length > 0)
+						{
+							runner.hand.push(runner.deck.pop());
+						}
+					}
+				}
+			}
+
+			function playCard(runner, cardName)
+			{
+				//when cardHandIndex == -1, play fatigue
+				var card = cardList[cardName];
+				runner.position += card.distance;
+				runner.energy -= (card.energy * (1 + runner.exhaustion)).toFixed(0);
+				if (cardName == "Recover")
+				{
+					runner.energy += 10;
+				}
+				else if (cardName == "Kick")
+				{
+					runner.energy = 0;
+				}
+				var distanceFromFinish = 10000 - runner.position;
+				
+				var runnerName = "Runner " + runner.id;
+				if (runner.isPlayer)
+				{
+					runnerName = "Player";
+				}
+				
+				if (runner.position < 10000)
+				{
+					showMessage(runnerName + " plays " + cardName + " (" + distanceFromFinish + " meters from the finish, " + runner.energy + "% energy remaining).");
+				}
+				else
+				{
+					showMessage(runnerName + " plays " + cardName + " and crosses the finish line.");
+				}
+			}
+			
+			function createRunner(runnerList)
+			{
+				this.isPlayer = false;
+				this.id = runnerList.length;
+				this.position = 0;
+				this.positionBeforeMoving = 0;
+				this.energy = 100;
+				this.deck = ["Run", "Run", "Run", "Surge", "Surge", "Recover", "Recover", "Kick", "Coast", "Coast", "Reel In", "Reel In"];
+				this.hand = [];
+				this.discard = [];
+				this.finished = false;
+				this.exhaustion = 0;
+				this.workouts = [];
+				this.points = 0;
+			}
+
+			//From Stack Overflow: https://stackoverflow.com/questions/1129216/sort-array-of-objects-by-string-property-value
+			function dynamicSort(property) 
+			{
+				var sortOrder = 1;
+
+				if(property[0] === "-") 
+				{
+					sortOrder = -1;
+					property = property.substr(1);
+				}
+				return function (a,b) 
+				{
+					var result = (a[property] < b[property]) ? -1 : (a[property] > b[property]) ? 1 : 0;
+					return result * sortOrder;
+				}
+			}
+
+			//From: https://javascript.info/task/shuffle
+			function shuffle(array) 
+			{
+				array.sort(() => Math.random() - 0.5);
+			}
+			
+			//From: https://stackoverflow.com/questions/13627308/add-st-nd-rd-and-th-ordinal-suffix-to-a-number
+			function ordinal_suffix_of(i) 
+			{
+				var j = i % 10,
+					k = i % 100;
+				if (j == 1 && k != 11) {
+					return i + "st";
+				}
+				if (j == 2 && k != 12) {
+					return i + "nd";
+				}
+				if (j == 3 && k != 13) {
+					return i + "rd";
+				}
+				return i + "th";
+			}
+			
+			function showMessage(text)
+			{
+				if ($('#infoP').html().length == 0)
+				{
+					$('#infoP').html(text);
+				}
+				else
+				{
+					$('#infoP').html(
+						$('#infoP').html()
+						+ "<br/>"
+						+ text
+					);
+				}
+			}
+		</script>
+	</body>
+</html>
