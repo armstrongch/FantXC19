@@ -387,8 +387,27 @@
 				}
 			}
 			
+			function draftWorkout(runner)
+			{
+				//TO-DO!!
+			}
+			
+			function postRace()
+			{
+				for (let i = 0; i < masterRunnerList.length; i++)
+				{
+					var runner = masterRunnerList[i];
+					runner.exhaustion  = 0.5;
+					for (let j = 0; j < workoutsPerWeek; j++)
+					{
+						draftWorkout(runner);
+					}
+				}
+			}
+			
 			function endRace()
 			{
+				postRace();
 				$('#cards').html('<button onclick="seasonWeek()">Continue</button>');
 			}
 			
