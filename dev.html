@@ -240,6 +240,10 @@
 				for (let i = 0; i < 50; i++)
 				{
 					var runner = new createRunner(masterRunnerList);
+					for (let j = 0; j < workoutsPerWeek; j++)
+					{
+						selectAIWorkout(runner);
+					}
 					masterRunnerList.push(runner);
 				}
 			}
@@ -387,7 +391,7 @@
 				}
 			}
 			
-			function draftWorkout(runner)
+			function selectAIWorkout(runner)
 			{
 				//TO-DO!!
 			}
@@ -400,7 +404,7 @@
 					runner.exhaustion  += 0.5;
 					for (let j = 0; j < workoutsPerWeek; j++)
 					{
-						draftWorkout(runner);
+						selectAIWorkout(runner);
 					}
 				}
 			}
