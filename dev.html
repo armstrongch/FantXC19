@@ -39,6 +39,7 @@
 		<p id="infoP"></p>
 		<script>
 			var runnerList = [];
+			var masterRunnerList = [];
 			var finisherList = [];
 			var handSize = 3;
 			var raceRoundNum = 0;
@@ -106,6 +107,7 @@
 			{
 				player = new createRunner(runnerList);
 				player.isPlayer = true;
+				createMasterRunnerList();
 				setupWorkouts();
 				seasonWeek();
 			}
@@ -231,39 +233,49 @@
 				drawRunners();
 				playerTurn();
 			}
-
+			
+			function createMasterRunnerList()
+			{
+				masterRunnerList = [];
+				for (let i = 0; i < 50; i++)
+				{
+					var runner = new createRunner(masterRunnerList);
+					masterRunnerList.push(runner);
+				}
+			}
+			
+			function resetBeforeRace(runner)
+			{
+				runner.deck.concat(player.hand);
+				runner.deck.concat(player.discard);
+				shuffle(runner.deck);
+				runner.hand = [];
+				runner.discard = [];
+				runner.energy = 100;
+				runner.position = 0;
+				runner.positionBeforeMoving = 0;
+				runner.finished = false;
+				//deck.length MUST be more than handSize, or this WILL break
+				for (let i = 0; i < handSize; i++)
+				{
+					runner.hand.push(runner.deck.pop());
+				}
+			}
+			
 			function setupRaceRunners(numRunners)
 			{
 				availablePoints += numRunners;
 				
+				resetBeforeRace(player);
 				runnerList = [];
-				
-				player.deck.concat(player.hand);
-				player.deck.concat(player.discard);
-				shuffle(player.deck);
-				player.hand = [];
-				player.discard = [];
-				for (let i = 0; i < handSize; i++)
-				{
-					player.hand.push(player.deck.pop());
-				}
-				
 				runnerList[0] = player;
 				finisherList = [];
-				for (let i = 1; i < numRunners; i++)
+				shuffle(masterRunnerList);
+				
+				for (let i = 0; i < numRunners - 1; i++)
 				{
-					var runner = new createRunner(runnerList);
-					shuffle(runner.deck);
-					//deck.length MUST be more than handSize, or this WILL break
-					
-					runner.deck.concat(player.hand);
-					runner.deck.concat(player.discard);
-					runner.hand = [];
-					runner.discard = [];
-					for (let i = 0; i < handSize; i++)
-					{
-						runner.hand.push(runner.deck.pop());
-					}
+					var runner = masterRunnerList[i];
+					resetBeforeRace(runner);
 					runnerList.push(runner);
 				}
 				showMessage("Race will have " + numRunners + " runners.");
@@ -647,10 +659,10 @@
 				this.deck = ["Run", "Run", "Run", "Surge", "Surge", "Recover", "Recover", "Kick", "Coast", "Coast", "Reel In", "Reel In"];
 				this.hand = [];
 				this.discard = [];
-				this.finished = false;
 				this.exhaustion = 0;
 				this.workouts = [];
 				this.points = 0;
+				this.finished = false;
 			}
 
 			//From Stack Overflow: https://stackoverflow.com/questions/1129216/sort-array-of-objects-by-string-property-value
