@@ -397,7 +397,7 @@
 				for (let i = 0; i < masterRunnerList.length; i++)
 				{
 					var runner = masterRunnerList[i];
-					runner.exhaustion  = 0.5;
+					runner.exhaustion  += 0.5;
 					for (let j = 0; j < workoutsPerWeek; j++)
 					{
 						draftWorkout(runner);
@@ -432,18 +432,19 @@
 					var runnerName = "Runner " + finishersThisTurn[i].id;
 					var pointsScored = runnerList.length - finisherList.length + 1;
 					finishersThisTurn[i].points += pointsScored;
-					var exhaustionHTML = "";
-					if (finishersThisTurn[i].energy < 50)
-					{
-						var exhaustionGained = Math.floor((50 - finishersThisTurn[i].energy)/10) * 0.1;
-						exhaustionGained = exhaustionGained.toFixed(2);
-						exhaustionHTML = "<br/>Gained " + exhaustionGained + " exhaustion, (0.10 per 10% energy below 50%).";
-						finishersThisTurn[i].exhaustion = finishersThisTurn[i].exhaustion + parseFloat(exhaustionGained);
-					}
 					 
 					if (finishersThisTurn[i].isPlayer)
 					{
 						runnerName = "Player";
+						
+						var exhaustionHTML = "";
+						if (finishersThisTurn[i].energy < 50)
+						{
+							var exhaustionGained = Math.floor((50 - finishersThisTurn[i].energy)/10) * 0.1;
+							exhaustionGained = exhaustionGained.toFixed(2);
+							exhaustionHTML = "<br/>Gained " + exhaustionGained + " exhaustion, (0.10 per 10% energy below 50%).";
+							finishersThisTurn[i].exhaustion = finishersThisTurn[i].exhaustion + parseFloat(exhaustionGained);
+						}
 						
 						$('#playerInfo').html(
 							"Finished in " + ordinal_suffix_of(finisherList.length) + " place with " + finishersThisTurn[i].energy + "% energy remaining, scoring " + pointsScored + " points." + exhaustionHTML
