@@ -60,7 +60,7 @@
 			var workoutTemplate = '<div id="workouts"><div class="card"><p style="text-align: center;">[Workout Name]</p><p>Type: [TTTT]</p><p>[T]</p><p>Cost: [EE] exhaustion</p><button style="display: block; margin: 0 auto; bottom: 0;" disabled="true">Select</button></div></div>';
 			
 			//this.deck = ["Run", "Run", "Run", "Surge", "Surge", "Recover", "Recover", "Kick", "Coast", "Coast", "Reel In", "Reel In"];
-			var cardList = 
+			var cardListTemplate = 
 			{
 				"Run": new card(800, 10, "None"),
 				"Surge": new card(1400, 25, "None"),
@@ -74,7 +74,7 @@
 			function getCardPriority(runner, cardName)
 			{
 				var priority = 0;
-				if (runner.energy < (cardList[cardName].energy * 1 + runner.exhaustion).toFixed(0))
+				if (runner.energy < (runner.cardList[cardName].energy * 1 + runner.exhaustion).toFixed(0))
 				{
 					priority -= 10000;
 				}
@@ -82,12 +82,12 @@
 				switch(cardName)
 				{
 					case "Kick":
-						priority += cardList[cardName].distance;
-						var distanceFromFinishAfterKick = 10000 - runner.position - cardList[cardName].distance;
+						priority += runner.cardList[cardName].distance;
+						var distanceFromFinishAfterKick = 10000 - runner.position - runner.cardList[cardName].distance;
 						priority -= distanceFromFinishAfterKick;
 						break;
 					default:
-						priority += cardList[cardName].distance;
+						priority += runner.cardList[cardName].distance;
 						break;
 				}
 				return priority;
@@ -550,7 +550,7 @@
 				var isCoastValid = validChecks[0];
 				var isReelInValid = validChecks[1];
 				var handCard = cardTemplate;
-				var card = cardList[cardName];
+				var card = runner.cardList[cardName];
 				handCard = handCard.replace("[Card Name]", cardName);
 				handCard = handCard.replace("[DDDD]", card.distance);
 				var convertedEnergy = (card.energy * (1 + runner.exhaustion)).toFixed(0);
@@ -647,7 +647,7 @@
 							(cardToPlayIndex <= runner.hand.length - 1) //cardToPlayIndex is in hand
 							&& 
 							(
-								((cardList[runner.hand[0]].energy * 1 + runner.exhaustion).toFixed(0) > runner.energy) //Card costs too much
+								((runner.cardList[runner.hand[0]].energy * 1 + runner.exhaustion).toFixed(0) > runner.energy) //Card costs too much
 								|| ((!isCoastValid) && (runner.hand[cardToPlayIndex] == "Coast")) //Card is Coast and !isCoastValid
 								|| ((!isReelInValid) && (runner.hand[cardToPlayIndex] == "Reel In")) //Card is Reel In and !isReelInValid
 							)
@@ -677,7 +677,7 @@
 			function playCard(runner, cardName)
 			{
 				//when cardHandIndex == -1, play fatigue
-				var card = cardList[cardName];
+				var card = runner.cardList[cardName];
 				runner.position += card.distance;
 				runner.energy -= (card.energy * (1 + runner.exhaustion)).toFixed(0);
 				if (cardName == "Recover")
@@ -716,12 +716,13 @@
 				this.deck = ["Run", "Run", "Run", "Surge", "Surge", "Recover", "Recover", "Kick", "Coast", "Coast", "Reel In", "Reel In"];
 				this.hand = [];
 				this.discard = [];
-				this.exhaustion = 0;
+				this.exhaustion = 0;  
 				this.workouts = [];
 				this.points = 0;
 				this.finished = false;
 				this.bonusEnergy = 0;
 				this.startingEnergy = 100;
+				this.cardList = cardListTemplate;
 			}
 
 			//From Stack Overflow: https://stackoverflow.com/questions/1129216/sort-array-of-objects-by-string-property-value
