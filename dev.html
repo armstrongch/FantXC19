@@ -188,8 +188,38 @@
 					case "Fartleks":
 						runner.deck.push("Surge");
 						break;
+					case "Tempo":
+						runner.cardList["Run"].energy -= 5;
+						if (runner.cardList["Run"].energy < 0)
+						{
+							runner.cardList["Run"].energy = 0;
+						}
+						runner.cardList["Coast"].energy -= 5;
+						if (runner.cardList["Coast"].energy < 0)
+						{
+							runner.cardList["Coast"].energy = 0;
+						}
+						break;
 				}
 			}
+			
+			/*function card(distance, energy, specialText)
+			{
+				this.distance = distance;
+				this.energy = energy;
+				this.specialText = specialText;
+			}
+			
+			var cardListTemplate = 
+			{
+				"Run": new card(800, 10, "None"),
+				"Surge": new card(1400, 25, "None"),
+				"Fatigue": new card(600, 0, "None"), 
+				"Recover": new card(600, 5, "Gain 10% Energy"),
+				"Kick": new card(1600, 15, "Expends all available Energy"),
+				"Coast": new card(700, 5, "Can only be used while running with a pack"),
+				"Reel In": new card(1000, 10, "Can only be used within 300 meters behind the next runner")
+			};*/
 			
 			/*this.deck = [
 			"Run", "Run", "Run", 
@@ -207,7 +237,7 @@
 				
 				workoutList.push(["Long Run", "Endurance", "Permenantly increase starting energy by 25%"]);
 					workoutList.push(["Steady Volume", "Endurance", "Reduce exhaustion from workouts and races by 0.10"]);
-					workoutList.push(["Tempo", "Endurance", "Reduce cost of 'Run' and 'Coast' cards by 5% energy"]);
+				workoutList.push(["Tempo", "Endurance", "Reduce cost of 'Run' and 'Coast' cards by 5% energy"]);
 					workoutList.push(["Cruise Intervals", "Endurance", "Reduce the cost of 'Kick' cards by 5% energy"]);
 					
 					workoutList.push(["Threshold Repeats", "Pace", "Increase distance of 'Surge' and 'Reel In' cards by 200 meters"]);
@@ -780,6 +810,29 @@
 					);
 				}
 			}
+		/*
+		TO-DO: How is this possible??
+		
+		Race Round 10
+		Player plays Surge (1000 meters from the finish, 30% energy remaining).
+		Runner 4 plays Surge (1200 meters from the finish, -11% energy remaining).
+		Runner 31 plays Recover (1600 meters from the finish, 12% energy remaining).
+		Runner 9 plays Recover (1600 meters from the finish, 12% energy remaining).
+		Runner 0 plays Recover (1600 meters from the finish, 12% energy remaining).
+		Runner 34 plays Recover (1600 meters from the finish, 12% energy remaining).
+		Runner 41 plays Recover (1600 meters from the finish, 12% energy remaining).
+		Runner 46 plays Fatigue (1600 meters from the finish, 2% energy remaining).
+		Runner 36 plays Fatigue (1600 meters from the finish, 5% energy remaining).
+		Runner 15 plays Fatigue (1600 meters from the finish, 1% energy remaining).
+		Runner 37 plays Fatigue (1600 meters from the finish, -5% energy remaining).
+		Runner 7 plays Fatigue (1600 meters from the finish, 1% energy remaining).
+		Runner 25 plays Fatigue (1500 meters from the finish, -7% energy remaining).
+		Runner 12 plays Fatigue (1400 meters from the finish, -5% energy remaining).
+		Runner 40 plays Fatigue (1300 meters from the finish, -11% energy remaining).
+		Runner 43 plays Fatigue (1200 meters from the finish, 0% energy remaining).
+		Runner 11 plays Fatigue (1000 meters from the finish, 0% energy remaining).
+		Runner 3 plays Fatigue (900 meters from the finish, 0% energy remaining).
+		*/
 		</script>
 	</body>
 </html>
