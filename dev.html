@@ -74,7 +74,7 @@
 			function getCardPriority(runner, cardName)
 			{
 				var priority = 0;
-				if (runner.energy < (runner.cardList[cardName].energy * 1 + runner.exhaustion).toFixed(0))
+				if (runner.energy < (runner.cardList[cardName].energy * (1 + runner.exhaustion)).toFixed(0))
 				{
 					priority -= 10000;
 				}
@@ -677,7 +677,7 @@
 							(cardToPlayIndex <= runner.hand.length - 1) //cardToPlayIndex is in hand
 							&& 
 							(
-								((runner.cardList[runner.hand[0]].energy * 1 + runner.exhaustion).toFixed(0) > runner.energy) //Card costs too much
+								((runner.cardList[runner.hand[0]].energy * (1 + runner.exhaustion)).toFixed(0) > runner.energy) //Card costs too much
 								|| ((!isCoastValid) && (runner.hand[cardToPlayIndex] == "Coast")) //Card is Coast and !isCoastValid
 								|| ((!isReelInValid) && (runner.hand[cardToPlayIndex] == "Reel In")) //Card is Reel In and !isReelInValid
 							)
@@ -810,29 +810,6 @@
 					);
 				}
 			}
-		/*
-		TO-DO: How is this possible??
-		
-		Race Round 10
-		Player plays Surge (1000 meters from the finish, 30% energy remaining).
-		Runner 4 plays Surge (1200 meters from the finish, -11% energy remaining).
-		Runner 31 plays Recover (1600 meters from the finish, 12% energy remaining).
-		Runner 9 plays Recover (1600 meters from the finish, 12% energy remaining).
-		Runner 0 plays Recover (1600 meters from the finish, 12% energy remaining).
-		Runner 34 plays Recover (1600 meters from the finish, 12% energy remaining).
-		Runner 41 plays Recover (1600 meters from the finish, 12% energy remaining).
-		Runner 46 plays Fatigue (1600 meters from the finish, 2% energy remaining).
-		Runner 36 plays Fatigue (1600 meters from the finish, 5% energy remaining).
-		Runner 15 plays Fatigue (1600 meters from the finish, 1% energy remaining).
-		Runner 37 plays Fatigue (1600 meters from the finish, -5% energy remaining).
-		Runner 7 plays Fatigue (1600 meters from the finish, 1% energy remaining).
-		Runner 25 plays Fatigue (1500 meters from the finish, -7% energy remaining).
-		Runner 12 plays Fatigue (1400 meters from the finish, -5% energy remaining).
-		Runner 40 plays Fatigue (1300 meters from the finish, -11% energy remaining).
-		Runner 43 plays Fatigue (1200 meters from the finish, 0% energy remaining).
-		Runner 11 plays Fatigue (1000 meters from the finish, 0% energy remaining).
-		Runner 3 plays Fatigue (900 meters from the finish, 0% energy remaining).
-		*/
 		</script>
 	</body>
 </html>
