@@ -11,7 +11,7 @@
 			.card {
 				border: 1px solid black;
 				width: 175px;
-				height: 225px;
+				height: 250px;
 				float: left;
 				margin: 5px;
 				padding: 5px;
@@ -161,7 +161,10 @@
 			
 			function selectWorkout(runner, workoutName, cost)
 			{
-				runner.exhaustion += cost;
+				if (cost - runner.exhaustionReduction > 0)
+				{
+					runner.exhaustion += cost - runner.exhaustionReduction;
+				}
 				runner.workouts.push(workoutName);
 				
 				switch(workoutName)
@@ -200,55 +203,72 @@
 							runner.cardList["Coast"].energy = 0;
 						}
 						break;
+					case "Cruise Intervals":
+						runner.cardList["Kick"].energy -= 5;
+						if (runner.cardList["Kick"].energy < 0)
+						{
+							runner.cardList["Kick"].energy = 0;
+						}
+						break;
+					case "Threshold Repeats":
+						runner.cardList["Surge"].distance += 200;
+						runner.cardList["Reel In"].distance += 200;
+						break;
+					case "Progressive Run":
+						runner.cardList["Run"].distance += 300;
+						break;	
+					case "Weight Lifting":
+						runner.cardList["Run"].distance += 200;
+						runner.cardList["Surge"].distance += 200;
+						runner.cardList["Fatigue"].distance += 200;
+						runner.cardList["Recover"].distance += 200;
+						runner.cardList["Kick"].distance += 200;
+						runner.cardList["Coast"].distance += 200;
+						runner.cardList["Reel In"].distance += 200;
+						runner.cardList["Run"].energy += 5;
+						runner.cardList["Surge"].energy += 5;
+						runner.cardList["Fatigue"].energy += 5;
+						runner.cardList["Recover"].energy += 5;
+						runner.cardList["Kick"].energy += 5;
+						runner.cardList["Coast"].energy += 5;
+						runner.cardList["Reel In"].energy += 5;
+						break;
+					case "Kick":
+						runner.cardList["Run"].distance += 100;
+						break;
+					case "Hill Sprints":
+						runner.cardList["Surge"].distance += 100;
+						runner.cardList["Reel In"].distance += 100;
+						break;
+					case "Steady Volume":
+						runner.exhaustionReduction += 0.1;
+						break;
+					case "Full-Recovery Repeats":
+						runner.bonusDistanceAboveEighty += 100;
+						break;
 				}
 			}
-			
-			/*function card(distance, energy, specialText)
-			{
-				this.distance = distance;
-				this.energy = energy;
-				this.specialText = specialText;
-			}
-			
-			var cardListTemplate = 
-			{
-				"Run": new card(800, 10, "None"),
-				"Surge": new card(1400, 25, "None"),
-				"Fatigue": new card(600, 0, "None"), 
-				"Recover": new card(600, 5, "Gain 10% Energy"),
-				"Kick": new card(1600, 15, "Expends all available Energy"),
-				"Coast": new card(700, 5, "Can only be used while running with a pack"),
-				"Reel In": new card(1000, 10, "Can only be used within 300 meters behind the next runner")
-			};*/
-			
-			/*this.deck = [
-			"Run", "Run", "Run", 
-			"Surge", "Surge", 
-			"Recover", "Recover", 
-			"Kick", 
-			"Coast", "Coast", 
-			"Reel In", "Reel In"];*/
 			
 			function setupWorkouts()
 			{
 				workoutList.push(["Easy Run", "Rest", "Reduce exhaustion by 0.30"]);
 				workoutList.push(["Cross Train", "Rest", "Reduce exhaustion by 50% (rounded to nearest 0.10)"]);
 				workoutList.push(["Day Off", "Rest", "Increase energy by 20% during this week's race"]);
-				
+					
 				workoutList.push(["Long Run", "Endurance", "Permenantly increase starting energy by 25%"]);
-					workoutList.push(["Steady Volume", "Endurance", "Reduce exhaustion from workouts and races by 0.10"]);
+				workoutList.push(["Steady Volume", "Endurance", "Reduce exhaustion from workouts and races by 0.10"]);
 				workoutList.push(["Tempo", "Endurance", "Reduce cost of 'Run' and 'Coast' cards by 5% energy"]);
-					workoutList.push(["Cruise Intervals", "Endurance", "Reduce the cost of 'Kick' cards by 5% energy"]);
-					
-					workoutList.push(["Threshold Repeats", "Pace", "Increase distance of 'Surge' and 'Reel In' cards by 200 meters"]);
-					workoutList.push(["Progressive Run", "Pace", "Increase distance of 'Run' cards by 300 meters"]);
+				workoutList.push(["Cruise Intervals", "Endurance", "Reduce the cost of 'Kick' cards by 5% energy"]);
+						
+				workoutList.push(["Threshold Repeats", "Pace", "Increase distance of 'Surge' and 'Reel In' cards by 200 meters"]);
+				workoutList.push(["Progressive Run", "Pace", "Increase distance of 'Run' cards by 300 meters"]);
 				workoutList.push(["Double Workout", "Pace", "Add an additional 'Run' card to your deck"]);
-					workoutList.push(["Weight Lifting", "Pace", "Increase the cost of all cards by 5% and increase the distance of all cards by 200 meters"]);
-					
-					workoutList.push(["Compound Sets", "Speed", "Increase distance of 'Kick' cards by 100 meters"]);
+				workoutList.push(["Weight Lifting", "Pace", "Increase the cost of all cards by 5% and increase the distance of all cards by 200 meters"]);
+						
+				workoutList.push(["Compound Sets", "Speed", "Increase distance of 'Kick' cards by 100 meters"]);
 				workoutList.push(["Fartleks", "Speed", "Add an additional 'Surge' card to your deck"]);
-					workoutList.push(["Hill Sprints", "Speed", "Increase distance of 'Surge' and 'Reel In' cards by 100 meters"]);
-					workoutList.push(["Full-Recovery Repeats", "Speed", "Increase the distance of all cards by 200 meters when you have more than 80% energy"]);
+				workoutList.push(["Hill Sprints", "Speed", "Increase distance of 'Surge' and 'Reel In' cards by 100 meters"]);
+				workoutList.push(["Full-Recovery Repeats", "Speed", "Advance an additional 100 meters at the end of any turn where you have at least 80% energy remaining"]);
 			}
 			
 			function showWorkouts()
@@ -463,7 +483,10 @@
 				for (let i = 0; i < masterRunnerList.length; i++)
 				{
 					var runner = masterRunnerList[i];
-					runner.exhaustion  += 0.5;
+					if (0.5 - runner.exhaustionReduction > 0)
+					{
+						runner.exhaustion  += 0.5 - runner.exhaustionReduction;
+					}
 					for (let j = 0; j < workoutsPerWeek; j++)
 					{
 						selectAIWorkout(runner);
@@ -507,7 +530,11 @@
 						if (finishersThisTurn[i].energy < 50)
 						{
 							var exhaustionGained = Math.floor((50 - finishersThisTurn[i].energy)/10) * 0.1;
-							exhaustionGained = exhaustionGained.toFixed(2);
+							exhaustionGained = exhaustionGained.toFixed(2) - runner.exhaustionReduction;
+							if (exhaustionGained < 0)
+							{
+								exhaustionGained = 0;
+							}
 							exhaustionHTML = "<br/>Gained " + exhaustionGained + " exhaustion, (0.10 per 10% energy below 50%).";
 							finishersThisTurn[i].exhaustion = finishersThisTurn[i].exhaustion + parseFloat(exhaustionGained);
 						}
@@ -718,6 +745,12 @@
 				{
 					runner.energy = 0;
 				}
+				
+				if (runner.energy >= 80)
+				{
+					runner.position += runner.bonusDistanceAboveEighty;
+				}
+				
 				var distanceFromFinish = 10000 - runner.position;
 				
 				var runnerName = "Runner " + runner.id;
@@ -729,6 +762,10 @@
 				if (runner.position < 10000)
 				{
 					showMessage(runnerName + " plays " + cardName + " (" + distanceFromFinish + " meters from the finish, " + runner.energy + "% energy remaining).");
+					if ((runner.energy >= 80) && (runner.bonusDistanceAboveEighty > 0))
+					{
+						showMessage(runnerName + " is still feeling fresh, and covers an additional " + runner.bonusDistanceAboveEighty + " meters.");
+					}
 				}
 				else
 				{
@@ -753,6 +790,8 @@
 				this.bonusEnergy = 0;
 				this.startingEnergy = 100;
 				this.cardList = cardListTemplate;
+				this.exhaustionReduction = 0;
+				this.bonusDistanceAboveEighty = 0;
 			}
 
 			//From Stack Overflow: https://stackoverflow.com/questions/1129216/sort-array-of-objects-by-string-property-value
