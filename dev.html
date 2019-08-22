@@ -58,18 +58,6 @@
 			var cardTemplate = '<div class="card"><p style="text-align: center;">[Card Name]</p><p>Distance: [DDDD] meters</p><p>Cost: [EE]% energy</p><p>Special: [T]</p><button style="display: block; margin: 0 auto;" disabled="true">Select</button></div>';
 			
 			var workoutTemplate = '<div id="workouts"><div class="card"><p style="text-align: center;">[Workout Name]</p><p>Type: [TTTT]</p><p>[T]</p><p>Cost: [EE] exhaustion</p><button style="display: block; margin: 0 auto; bottom: 0;" disabled="true">Select</button></div></div>';
-			
-			//this.deck = ["Run", "Run", "Run", "Surge", "Surge", "Recover", "Recover", "Kick", "Coast", "Coast", "Reel In", "Reel In"];
-			var cardListTemplate = 
-			{
-				"Run": new card(800, 10, "None"),
-				"Surge": new card(1400, 25, "None"),
-				"Fatigue": new card(600, 0, "None"), 
-				"Recover": new card(600, 5, "Gain 10% Energy"),
-				"Kick": new card(1600, 15, "Expends all available Energy"),
-				"Coast": new card(700, 5, "Can only be used while running with a pack"),
-				"Reel In": new card(1000, 10, "Can only be used within 300 meters behind the next runner")
-			};
 
 			function getCardPriority(runner, cardName)
 			{
@@ -475,7 +463,83 @@
 			
 			function selectAIWorkout(runner)
 			{
-				//TO-DO!!
+				var workoutNum;
+				if (runner.exhaustion >= 0.5)
+				{
+					//Choose a Rest workout
+					workoutNum = Math.floor(Math.random() * 3); //0 - 2
+				}
+				else
+				{
+					//Choose a random non-Rest workout
+					workoutNum = 3 + Math.floor(Math.random() * 12); //3 - 14
+				}
+				var workoutName;
+				var cost;
+				switch(workoutNum)
+				{
+					case 0:
+						workoutName = "Easy Run";
+						cost = 0;
+						break;
+					case 1:
+						workoutName = "Cross Train";
+						cost = 0;
+						break;
+					case 2:
+						workoutName = "Day Off";
+						cost = 0;
+						break;
+					case 3:
+						workoutName = "Long Run";
+						cost = 0.3;
+						break
+					case 4:
+						workoutName = "Steady Volume";
+						cost = 0.3;
+						break;
+					case 5:
+						workoutName = "Tempo";
+						cost = 0.3;
+						break;
+					case 6:
+						workoutName = "Progressive Run";
+						cost = 0.2;
+						break;
+					case 7:
+						workoutName = "Threshold Repeats";
+						cost = 0.2;
+						break;
+					case 8:
+						workoutName = "Double Workout";
+						cost = 0.2;
+						break
+					case 9:
+						workoutName = "Weight Lifting";
+						cost = 0.2;
+						break;
+					case 10:
+						workoutName = "Compound Sets";
+						cost = 0.1;
+						break;
+					case 11:
+						workoutName = "Fartleks";
+						cost = 0.1;
+						break;
+					case 12:
+						workoutName = "Hill Sprints";
+						cost = 0.1;
+						break;
+					case 13:
+						workoutName = "Full-Recovery Repeats";
+						cost = 0.1;
+						break
+					case 14:
+						workoutName = "Cruise Intervals";
+						cost = 0.3;
+						break;
+				}
+				selectWorkout(runner, workoutName, cost);
 			}
 			
 			function postRace()
@@ -789,7 +853,16 @@
 				this.finished = false;
 				this.bonusEnergy = 0;
 				this.startingEnergy = 100;
-				this.cardList = cardListTemplate;
+				this.cardList = 
+				{
+					"Run": new card(800, 10, "None"),
+					"Surge": new card(1400, 25, "None"),
+					"Fatigue": new card(600, 0, "None"), 
+					"Recover": new card(600, 5, "Gain 10% Energy"),
+					"Kick": new card(1600, 15, "Expends all available Energy"),
+					"Coast": new card(700, 5, "Can only be used while running with a pack"),
+					"Reel In": new card(1000, 10, "Can only be used within 300 meters behind the next runner")
+				};
 				this.exhaustionReduction = 0;
 				this.bonusDistanceAboveEighty = 0;
 			}
